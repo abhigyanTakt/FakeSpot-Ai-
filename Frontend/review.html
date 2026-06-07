@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FakeSpot - Review Analysis</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root{
+    --primary:#ffffff;
+    --glass:rgba(255,255,255,0.08);
+    --border:rgba(255,255,255,0.15);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    font-family:'Inter',sans-serif;
+    background:transparent;
+    color:#fff;
+    overflow-x:hidden;
+    letter-spacing:0.3px;
+}
+
+h1,h2,h3,h4,h5,h6{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+}
+
+nav{
+    position:fixed;
+    width:100%;
+    padding:25px 5%;
+    display:flex;
+    justify-content:flex-end;
+    background:rgba(0,0,0,0.95);
+    backdrop-filter:blur(20px);
+    z-index:10;
+    border-bottom:1px solid var(--border);
+    font-weight:600;
+    font-size:1.1rem;
+}
+
+#spline-bg{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+    border:none;
+    transform:scale(1.5);
+    transform-origin:center;
+}
+
+.chat-container{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    max-width:1000px;
+    width:90%;
+    padding:20px;
+    background:rgba(0,0,0,0.3);
+    border:1px solid var(--border);
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+    height:70vh;
+    z-index:1;
+}
+
+.chat-messages{
+    flex:1;
+    overflow-y:auto;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+.message{
+    padding:15px 20px;
+    border-radius:20px;
+    max-width:70%;
+    word-wrap:break-word;
+    font-size:1.05rem;
+    font-weight:500;
+}
+
+.message.user{
+    background:linear-gradient(135deg,#d0d0d0 0%,#b0b0b0 100%);
+    color:#000;
+    align-self:flex-end;
+}
+
+.message.bot{
+    background:linear-gradient(135deg,rgba(255,255,255,0.3) 0%,rgba(255,255,255,0.2) 100%);
+    color:#ffffff;
+    align-self:flex-start;
+}
+
+.fake-result {
+    border: 1px solid rgba(255, 107, 107, 0.4);
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.2);
+}
+.fake-result strong {
+    color: #ff6b6b;
+}
+
+.genuine-result {
+    border: 1px solid rgba(81, 207, 102, 0.4);
+    box-shadow: 0 0 10px rgba(81, 207, 102, 0.2);
+}
+.genuine-result strong {
+    color: #51cf66;
+}
+
+.chat-input{
+    display:flex;
+    gap:10px;
+    padding:20px;
+    border-top:1px solid var(--border);
+    align-items:center;
+}
+
+.upload-icon{
+    cursor:pointer;
+    font-size:1.2rem;
+    color:#fff;
+    padding:10px;
+    background:rgba(255,255,255,0.1);
+    border-radius:25px;
+    border:1px solid var(--border);
+    transition:all 0.3s ease;
+}
+
+.upload-icon:hover{
+    background:rgba(255,255,255,0.2);
+}
+
+#image-input, #file-input{
+    display:none;
+}
+
+.image-preview{
+    max-width:100px;
+    max-height:100px;
+    border-radius:10px;
+    margin-right:10px;
+}
+
+#message-input{
+    flex:1;
+    padding:15px 20px;
+    background:rgba(255,255,255,0.15);
+    border:1px solid var(--border);
+    border-radius:25px;
+    color:#fff;
+    font-size:1.1rem;
+    font-weight:500;
+}
+
+#message-input::placeholder{
+    color:#b3b3b3;
+}
+
+#send-btn{
+    padding:15px 25px;
+    background:#fff;
+    color:#000;
+    border:none;
+    border-radius:25px;
+    cursor:pointer;
+    font-weight:600;
+    transition:all 0.3s ease;
+}
+
+#send-btn:hover{
+    background:#f0f0f0;
+    transform:scale(1.05);
+}
+
+.back-btn{
+    position:absolute;
+    top:25px;
+    left: 5%;
+    background:rgba(255,255,255,0.08);
+    border:1px solid var(--border);
+    color:#fff;
+    padding:10px 20px;
+    border-radius:25px;
+    cursor:pointer;
+    font-weight:600;
+    transition:all 0.3s ease;
+    z-index:11;
+}
+
+.back-btn:hover{
+    background:rgba(255,255,255,0.15);
+}
+
+.typing-dots {
+    animation: typing 1.5s infinite;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        opacity: 0.3;
+    }
+    30% {
+        opacity: 1;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+    <div>AI-Powered Review Detection</div>
+</nav>
+
+<iframe id="spline-bg" src="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/"></iframe>
+
+<button class="back-btn" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i> Back</button>
+
+<div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+        <div class="message bot">
+            <strong>FakeSpot AI:</strong> Hello! 👋 I'm your AI review detective! I can analyze both text reviews and images to help you spot fake reviews. Just paste a review, upload an image, or say hi - I'm here to help! 😊
+        </div>
+    </div>
+    <div class="chat-input">
+        <label class="upload-icon" title="Upload Image">
+            <i class="fas fa-image"></i>
+            <input type="file" id="image-input" accept="image/*">
+        </label>
+        <label class="upload-icon" title="Upload PDF/Excel">
+            <i class="fas fa-file-upload"></i>
+            <input type="file" id="file-input" accept=".pdf,.xlsx,.xls,.csv">
+        </label>
+        <input type="text" id="message-input" placeholder="Enter your review text here...">
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+<script>
+// Track cursor movement for robot interaction
+let mouseX = 0;
+let mouseY = 0;
+let selectedImage = null;
+let selectedFile = null;
+
+document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    
+    const splineBg = document.getElementById('spline-bg');
+    
+    // Apply subtle parallax/tilt effect based on cursor position
+    const rotateX = mouseY * 5; // -5 to 5 degrees
+    const rotateY = mouseX * 5; // -5 to 5 degrees
+    
+    splineBg.style.transform = `scale(1.5) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+});
+
+// Image upload handling
+document.getElementById('image-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            selectedImage = event.target.result;
+            addImagePreview(selectedImage);
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function addImagePreview(imageSrc) {
+    const chatMessages = document.getElementById('chat-messages');
+    const imageDiv = document.createElement('div');
+    imageDiv.className = 'message user';
+    imageDiv.innerHTML = `<img src="${imageSrc}" class="image-preview" alt="Uploaded image">`;
+    chatMessages.appendChild(imageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// File upload handling
+document.getElementById('file-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        selectedFile = file;
+        addFilePreview(file.name);
+    }
+});
+
+function addFilePreview(filename) {
+    const chatMessages = document.getElementById('chat-messages');
+    const fileDiv = document.createElement('div');
+    fileDiv.className = 'message user';
+    fileDiv.innerHTML = `<i class="fas fa-file-alt"></i> <strong>File:</strong> ${filename}`;
+    chatMessages.appendChild(fileDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Original chat functionality
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+document.getElementById('message-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+function sendMessage() {
+    const input = document.getElementById('message-input');
+    const message = input.value.trim();
+
+    // Send only if there's text, an image, or a file
+    if (message === '' && !selectedImage && !selectedFile) {
+        // Show a helpful message for empty input
+        addMessage("Hi! I'm here to help you analyze reviews. You can paste review text, upload an image/file, or just say hello! 😊", 'bot');
+        return;
+    }
+
+    // Add text message if present
+    if (message) {
+        addMessage(message, 'user');
+    }
+
+    // Add image if selected
+    if (selectedImage) {
+        const chatMessages = document.getElementById('chat-messages');
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'message user';
+        imageDiv.innerHTML = `<img src="${selectedImage}" class="image-preview" alt="Uploaded image">`;
+        chatMessages.appendChild(imageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    const textToAnalyze = message;
+    const imageToAnalyze = selectedImage;
+    const fileToAnalyze = selectedFile;
+
+    input.value = '';
+    document.getElementById('image-input').value = '';
+    document.getElementById('file-input').value = '';
+    selectedImage = null;
+    selectedFile = null;
+
+    // Show typing indicator
+    addTypingIndicator();
+
+    // Send to backend API
+    if (textToAnalyze) {
+        // Send text analysis request
+        fetch('http://localhost:5000/analyze-text', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text: textToAnalyze })
+        })
+        .then(response => response.json())
+        .then(data => {
+            removeTypingIndicator();
+            if (data.error) {
+                addMessage('Error: ' + data.error, 'bot', 'fake-result');
+            } else {
+                // Handle different response types
+                if (data.intent === 'greeting' || data.intent === 'casual' || data.intent === 'capabilities') {
+                    addMessage(data.result, 'bot');
+                } else {
+                    // Review analysis - format with analysis styling
+                    const statusClass = data.analysis && data.analysis.is_fake ? 'fake-result' : 'genuine-result';
+                    addMessage(data.result, 'bot', statusClass);
+                }
+            }
+        })
+        .catch(error => {
+            removeTypingIndicator();
+            addMessage('Error connecting to AI service. Please try again.', 'bot', 'fake-result');
+            console.error('Error:', error);
+        });
+    } else if (imageToAnalyze) {
+        // Convert base64 to blob for form data
+        fetch(imageToAnalyze)
+        .then(res => res.blob())
+        .then(blob => {
+            const formData = new FormData();
+            formData.append('image', blob, 'image.jpg');
+
+            return fetch('http://localhost:5000/analyze-image', {
+                method: 'POST',
+                body: formData
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            removeTypingIndicator();
+            if (data.error) {
+                addMessage('Error: ' + data.error, 'bot', 'fake-result');
+            } else {
+                const statusClass = data.analysis && data.analysis.is_fake ? 'fake-result' : 'genuine-result';
+                addMessage(data.result, 'bot', statusClass);
+            }
+        })
+        .catch(error => {
+            removeTypingIndicator();
+            addMessage('Error connecting to AI service. Please try again.', 'bot', 'fake-result');
+            console.error('Error:', error);
+        });
+    } else if (fileToAnalyze) {
+        const formData = new FormData();
+        formData.append('file', fileToAnalyze);
+
+        fetch('http://localhost:5000/analyze-bulk', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            removeTypingIndicator();
+            if (data.error) {
+                addMessage('Error: ' + data.error, 'bot', 'fake-result');
+            } else {
+                let report = `<strong>Bulk Analysis Complete!</strong><br>`;
+                report += `Total Reviews Found: ${data.total_found}<br>`;
+                report += `Overall Authenticity Percentage: <strong>${data.accuracy_percentage.toFixed(1)}%</strong><br><br>`;
+                report += `<em>Top Findings:</em><br>`;
+                
+                let fakeCount = 0;
+                data.results.forEach(res => {
+                    const isFake = res.analysis.is_fake;
+                    if (isFake) fakeCount++;
+                    const status = isFake ? '<span style="color:#ff6b6b">❌ Fake</span>' : '<span style="color:#51cf66">✅ Genuine</span>';
+                    report += `• "${res.review}" - <strong>${status}</strong> (${res.analysis.authenticity_score}%)<br>`;
+                });
+                
+                const overallStatusClass = (fakeCount > data.results.length / 2) ? 'fake-result' : 'genuine-result';
+                addMessage(report, 'bot', overallStatusClass);
+            }
+        })
+        .catch(error => {
+            removeTypingIndicator();
+            addMessage('Error connecting to AI service. Please try again.', 'bot', 'fake-result');
+            console.error('Error:', error);
+        });
+    }
+
+}
+function addTypingIndicator() {
+    const chatMessages = document.getElementById('chat-messages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message bot typing';
+    typingDiv.id = 'typing-indicator';
+
+    // Different messages based on what's being analyzed
+    const messages = [
+        'Analyzing your message... 🔍',
+        'Processing with AI... 🤖',
+        'Checking for authenticity... ✅',
+        'Examining patterns... 📊'
+    ];
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+    typingDiv.innerHTML = `<strong>FakeSpot AI:</strong> ${randomMessage} <span class="typing-dots">...</span>`;
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+function addMessage(text, sender, statusClass = '') {
+    const messagesDiv = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender} ${statusClass}`;
+    messageDiv.innerHTML = `<strong>${sender === 'user' ? 'You:' : 'FakeSpot AI:'}</strong> ${text}`;
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+</script>
+
+</body>
+</html>

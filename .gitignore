@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environments and Credentials
+.env
+.env.local
+.venv
+venv/
+ENV/
+env/
+Backend/.env
+
+# Local machine learning models / large binary files
+*.pkl
+Backend/local_model.pkl
+Backend/local_vectorizer.pkl
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS metadata
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Unit tests / Coverage / Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FakeSpot - AI Review Detector</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://threejs.org/examples/js/loaders/FontLoader.js"></script>
+<script src="https://threejs.org/examples/js/geometries/TextGeometry.js"></script>
+<script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.62/build/spline-viewer.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root{
+    --primary:#ffffff;
+    --glass:rgba(255,255,255,0.08);
+    --border:rgba(255,255,255,0.15);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    font-family:'Inter',sans-serif;
+    background:#000;
+    color:#fff;
+    overflow-x:hidden;
+    letter-spacing:0.3px;
+}
+
+h1,h2,h3,h4,h5,h6{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+}
+
+p{
+    font-weight:400;
+    line-height:1.6;
+}
+
+/* ================= FLOATING CTA ================= */
+.floating-cta{
+    position:fixed;
+    bottom:30px;
+    right:30px;
+    z-index:99;
+    animation:float-up 3s ease-in-out infinite;
+}
+
+@keyframes float-up{
+    0%,100%{
+        transform:translateY(0px);
+    }
+    50%{
+        transform:translateY(-15px);
+    }
+}
+
+.cta-button{
+    padding:16px 28px;
+    background:linear-gradient(135deg,#ffffff 0%,#f0f0f0 100%);
+    color:#000;
+    border:none;
+    border-radius:50px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:0.95rem;
+    transition:all 0.3s ease;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    box-shadow:0 10px 40px rgba(255,255,255,0.2);
+}
+
+.cta-button:hover{
+    transform:scale(1.05);
+    box-shadow:0 15px 50px rgba(255,255,255,0.3);
+}
+
+.cta-button i{
+    font-size:1.1rem;
+}
+
+@media(max-width:768px){
+    .floating-cta{
+        bottom:20px;
+        right:20px;
+    }
+    
+    .cta-button{
+        padding:12px 20px;
+        font-size:0.85rem;
+    }
+}
+
+/* ================= PARALLAX BACKGROUND ================= */
+.parallax-section{
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(135deg,rgba(255,255,255,0.03) 0%,rgba(255,255,255,0.01) 100%);
+}
+
+.parallax-element{
+    position:absolute;
+    pointer-events:none;
+    opacity:0.15;
+}
+
+.parallax-element-1{
+    width:300px;
+    height:300px;
+    background:radial-gradient(circle,rgba(255,255,255,0.3) 0%,transparent 70%);
+    border-radius:50%;
+    top:-100px;
+    left:-100px;
+}
+
+.parallax-element-2{
+    width:200px;
+    height:200px;
+    background:radial-gradient(circle,rgba(255,255,255,0.2) 0%,transparent 70%);
+    border-radius:50%;
+    bottom:-50px;
+    right:-50px;
+}
+
+/* ================= PARTICLE EFFECTS ================= */
+.particle{
+    position:absolute;
+    pointer-events:none;
+}
+
+@keyframes float-particle{
+    0%{
+        transform:translateY(0px) translateX(0px);
+        opacity:1;
+    }
+    100%{
+        transform:translateY(-100px) translateX(50px);
+        opacity:0;
+    }
+}
+
+.particle-dot{
+    width:4px;
+    height:4px;
+    background:#ffffff;
+    border-radius:50%;
+    animation:float-particle 4s ease-out infinite;
+}
+
+/* ================= WELCOME ================= */
+#welcome-screen{
+    position:fixed;
+    width:100%;
+    height:100vh;
+    background:#000;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    z-index:9999;
+    transition:1s ease;
+}
+
+#welcome-screen.hidden{
+    transform:translateY(-100%);
+    opacity:0;
+    pointer-events:none;
+}
+
+#welcome-screen spline-viewer{
+    position:absolute;
+    width:100%;
+    height:100%;
+    z-index:1;
+    transform: scale(1.5);
+}
+
+spline-viewer::part(branding) {
+    display: none !important;
+}
+
+.welcome-content{
+    position:relative;
+    z-index:2;
+    text-align:center;
+}
+
+.welcome-content h1{
+    font-size:4rem;
+    letter-spacing:2px;
+    font-weight:800;
+    margin-bottom:15px;
+}
+
+.welcome-content p{
+    font-size:1.2rem;
+    color:#cccccc;
+    font-weight:300;
+    letter-spacing:1px;
+}
+
+.enter-btn{
+    margin-top:40px;
+    padding:14px 50px;
+    background:#fff;
+    color:#000;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:1rem;
+    transition:all 0.3s ease;
+    font-family:'Inter',sans-serif;
+}
+
+.enter-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 20px 40px rgba(255,255,255,0.2);
+}
+
+/* ================= MAIN ================= */
+#main-content{
+    opacity:0;
+    transition:1.5s ease;
+}
+
+#main-content.active{
+    opacity:1;
+}
+
+.hero{
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:0 20px;
+}
+
+.hero h2{
+    font-size:4rem;
+    margin-bottom:20px;
+    font-weight:800;
+    letter-spacing:-1px;
+}
+
+.hero p{
+    font-size:1.3rem;
+    color:#cccccc;
+    margin-bottom:40px;
+    font-weight:300;
+}
+
+nav{
+    position:fixed;
+    width:100%;
+    padding:25px 5%;
+    display:flex;
+    justify-content:space-between;
+    background:rgba(0,0,0,0.95);
+    backdrop-filter:blur(20px);
+    z-index:10;
+    border-bottom:1px solid var(--border);
+    font-weight:600;
+    font-size:1.1rem;
+}
+
+canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+}
+
+/* ================= SECTIONS ================= */
+section{
+    min-height:auto !important;
+    padding:120px 10% !important;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(10px);
+    border-top:1px solid var(--border);
+}
+
+section:nth-child(even){
+    background:rgba(0,0,0,0.3);
+}
+
+section h2{
+    font-size:3.5rem;
+    margin-bottom:60px;
+    background:linear-gradient(135deg,#ffffff 0%,#cccccc 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    text-align:center;
+    font-weight:800;
+    letter-spacing:-1px;
+}
+
+/* ================= ABOUT SECTION ================= */
+.about-content{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:80px;
+    align-items:center;
+    margin-top:50px;
+}
+
+.about-text h3{
+    font-size:2.2rem;
+    margin-bottom:25px;
+    color:#ffffff;
+    font-weight:700;
+}
+
+.about-text p{
+    color:#b3b3b3;
+    line-height:1.9;
+    margin-bottom:20px;
+    font-size:1.05rem;
+}
+
+/* ================= MOVING LOGOS ================= */
+.logo-carousel{
+    display:flex;
+    gap:50px;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:60px;
+    padding:40px;
+    background:rgba(255,255,255,0.05);
+    border-radius:20px;
+    border:1px solid var(--border);
+}
+
+.logo-item{
+    font-size:2.5rem;
+    font-weight:700;
+    color:#ffffff;
+    padding:20px 30px;
+    background:rgba(255,255,255,0.08);
+    border-radius:15px;
+    border:1px solid rgba(255,255,255,0.1);
+    transition:all 0.3s ease;
+    animation:float 3s ease-in-out infinite;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+}
+
+.logo-item i{
+    font-size:2.8rem;
+    color:#ffffff;
+}
+
+.logo-item span{
+    font-size:1.1rem;
+}
+
+.logo-item:nth-child(1){
+    animation-delay:0s;
+}
+
+.logo-item:nth-child(2){
+    animation-delay:0.5s;
+}
+
+.logo-item:nth-child(3){
+    animation-delay:1s;
+}
+
+@keyframes float{
+    0%,100%{
+        transform:translateY(0px);
+    }
+    50%{
+        transform:translateY(-20px);
+    }
+}
+
+.logo-item:hover{
+    background:rgba(255,255,255,0.15);
+    border-color:rgba(255,255,255,0.3);
+    transform:scale(1.05);
+}
+
+/* ================= FEATURE CARDS ================= */
+.features-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:30px;
+    margin-top:50px;
+}
+
+.feature-card{
+    background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,rgba(255,255,255,0.05) 100%);
+    border:1px solid var(--border);
+    padding:40px;
+    border-radius:20px;
+    backdrop-filter:blur(20px);
+    transition:all 0.3s ease;
+    text-align:center;
+}
+
+.feature-card:hover{
+    transform:translateY(-10px);
+    border-color:rgba(255,255,255,0.3);
+    background:linear-gradient(135deg,rgba(255,255,255,0.15) 0%,rgba(255,255,255,0.08) 100%);
+    box-shadow:0 20px 40px rgba(255,255,255,0.1);
+}
+
+.feature-icon{
+    font-size:3rem;
+    margin-bottom:20px;
+}
+
+.feature-card h3{
+    font-size:1.5rem;
+    margin-bottom:15px;
+    color:#ffffff;
+    font-weight:700;
+}
+
+.feature-card p{
+    color:#b3b3b3;
+    line-height:1.7;
+    font-size:1rem;
+}
+
+/* ================= CONTACT SECTION ================= */
+.contact-content{
+    max-width:700px;
+    margin:50px auto;
+    text-align:center;
+}
+
+.contact-content p{
+    color:#b3b3b3;
+    font-size:1.1rem;
+    line-height:1.9;
+}
+
+.contact-info{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:30px;
+    margin-top:60px;
+}
+
+.contact-item{
+    background:linear-gradient(135deg,rgba(255,255,255,0.08) 0%,rgba(255,255,255,0.04) 100%);
+    border:1px solid var(--border);
+    padding:40px;
+    border-radius:20px;
+    transition:all 0.3s ease;
+}
+
+.contact-item:hover{
+    background:linear-gradient(135deg,rgba(255,255,255,0.15) 0%,rgba(255,255,255,0.08) 100%);
+    border-color:rgba(255,255,255,0.3);
+    transform:translateY(-5px);
+}
+
+.contact-item-icon{
+    font-size:2.8rem;
+    margin-bottom:20px;
+}
+
+.contact-item h3{
+    margin-bottom:12px;
+    color:#ffffff;
+    font-weight:700;
+    font-size:1.2rem;
+}
+
+.contact-item p{
+    color:#b3b3b3;
+    font-size:1rem;
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:768px){
+    section{
+        padding:80px 8% !important;
+    }
+    
+    section h2{
+        font-size:2.2rem;
+    }
+    
+    .about-content{
+        grid-template-columns:1fr;
+        gap:40px;
+    }
+    
+    .features-grid{
+        grid-template-columns:1fr;
+    }
+    
+    .hero h2{
+        font-size:2.5rem;
+    }
+    
+    .welcome-content h1{
+        font-size:2.5rem;
+    }
+    
+    .logo-carousel{
+        gap:20px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============ WELCOME WITH SPLINE ============ -->
+<div id="welcome-screen">
+    <spline-viewer url="https://prod.spline.design/8HpdKLdA2VXvUEKK/scene.splinecode"></spline-viewer>
+    <div class="welcome-content">
+        <h1>Welcome to FakeSpot</h1>
+        <p>Detect Fake Reviews With AI</p>
+        <button class="enter-btn" onclick="enterSite()">Enter Platform</button>
+    </div>
+</div>
+
+<!-- 3D BACKGROUND -->
+<canvas id="bg"></canvas>
+
+<!-- FLOATING CTA BUTTON -->
+<div class="floating-cta">
+    <button class="cta-button" onclick="toggleContactPopup()">
+        <i class="fas fa-envelope"></i>
+        Contact Us
+    </button>
+</div>
+
+<!-- CONTACT POPUP -->
+<div id="contact-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100;background:rgba(0,0,0,0.95);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:40px;backdrop-filter:blur(20px);width:90%;max-width:400px;box-shadow:0 20px 60px rgba(255,255,255,0.1);">
+    <button onclick="toggleContactPopup()" style="position:absolute;top:20px;right:20px;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">×</button>
+    
+    <h3 style="color:#ffffff;margin-bottom:30px;font-size:1.8rem;font-family:'Space Grotesk',sans-serif;">Get In Touch</h3>
+    
+    <div style="display:flex;flex-direction:column;gap:20px;">
+        <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);padding:20px;border-radius:15px;transition:all 0.3s ease;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                <i class="fas fa-envelope" style="font-size:1.3rem;color:#ffffff;"></i>
+                <span style="color:#ffffff;font-weight:600;">Email</span>
+            </div>
+            <a href="mailto:cu24250022@coeruniversity.ac.in,cu240251579@coeruniversity.ac.in,cu24250059@coeruniversity.ac.in" style="color:#b3b3b3;text-decoration:none;font-size:0.95rem;">cu24250022@coeruniversity.ac.in, cu240251579@coeruniversity.ac.in, cu24250059@coeruniversity.ac.in</a>
+        </div>
+        
+        <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);padding:20px;border-radius:15px;transition:all 0.3s ease;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                <i class="fas fa-briefcase" style="font-size:1.3rem;color:#ffffff;"></i>
+                <span style="color:#ffffff;font-weight:600;">Business</span>
+            </div>
+            <a href="mailto:cu24250022@coeruniversity.ac.in" style="color:#b3b3b3;text-decoration:none;font-size:0.95rem;">cu24250022@coeruniversity.ac.in</a>
+        </div>
+        
+        <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);padding:20px;border-radius:15px;transition:all 0.3s ease;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                <i class="fas fa-map-marker-alt" style="font-size:1.3rem;color:#ffffff;"></i>
+                <span style="color:#ffffff;font-weight:600;">Location</span>
+            </div>
+            <p style="color:#b3b3b3;margin:0;font-size:0.95rem;">India</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MAIN CONTENT ============ -->
+<div id="main-content">
+
+<nav>
+    <div>FakeSpot</div>
+    <div>AI-Powered Review Detection</div>
+</nav>
+
+<header class="hero parallax-section">
+    <div class="parallax-element parallax-element-1"></div>
+    <div class="parallax-element parallax-element-2"></div>
+    <div style="position:relative;z-index:2;">
+        <h2>Detect Fake Reviews With AI</h2>
+        <p>Advanced machine learning powered detection system</p>
+        <button class="enter-btn" style="padding:16px 60px;font-size:1.1rem;" onclick="window.location.href='review.html'">Get Started</button>
+    </div>
+</header>
+
+<section id="features" style="padding:0 !important;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+    <iframe id="features-iframe" src="https://my.spline.design/theeternalarc-Y4d8m3ELoifgcUGtZc9VmmWK-cAx/" style="width:100%;height:100%;border:none;transform:scale(1.2);transform-origin:center;"></iframe>
+</section>
+
+<section id="about" class="parallax-section">
+    <div class="parallax-element parallax-element-1" style="top:50px;left:50px;"></div>
+    <h2>About FakeSpot</h2>
+    <div class="about-content">
+        <div class="about-text">
+            <h3>What We Do</h3>
+            <p>FakeSpot is designed to identify whether online product reviews are fake or genuine using machine learning techniques. The system analyzes the text of customer reviews, processes them using natural language processing methods, and classifies them as fake or real.</p>
+            <p>In addition to prediction, the system provides clear explanations for its decisions by highlighting important words or patterns that influenced the result. This transparency helps users understand exactly why a review was flagged as suspicious.</p>
+            <p>The project is implemented as a web-based application and can later be extended into a browser extension to help users check the authenticity of reviews directly on e-commerce websites, thereby improving trust and transparency in online shopping.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;position:relative;z-index:2;">
+            <div style="text-align:center;">
+                <div style="font-size:5rem;margin-bottom:20px;">✨</div>
+                <h3 style="color:#ffffff;margin-bottom:15px;font-size:1.8rem;">Advanced Detection</h3>
+                <p style="color:#b3b3b3;font-size:1.05rem;">Our algorithm uses NLP and machine learning to understand patterns and detect sophisticated review fraud with explainable AI.</p>
+            </div>
+            <div class="logo-carousel">
+                <div class="logo-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Amazon</span>
+                </div>
+                <div class="logo-item">
+                    <i class="fas fa-bag-shopping"></i>
+                    <span>Flipkart</span>
+                </div>
+                <div class="logo-item">
+                    <i class="fas fa-store"></i>
+                    <span>E-Commerce</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="contact" class="parallax-section">
+    <div class="parallax-element parallax-element-2" style="bottom:100px;right:100px;"></div>
+    <h2>Get In Touch</h2>
+    <div class="contact-content">
+        <p>Have questions about our AI detection system? Want to integrate FakeSpot into your platform? We'd love to hear from you.</p>
+    </div>
+    <div class="contact-info">
+        <div class="contact-item">
+            <div class="contact-item-icon">📧</div>
+            <h3>Email</h3>
+            <p>cu24250022@coeruniversity.ac.in</p>
+            <p>cu240251579@coeruniversity.ac.in</p>
+            <p>cu24250059@coeruniversity.ac.in</p>
+        </div>
+        <div class="contact-item">
+            <div class="contact-item-icon">📍</div>
+            <h3>Location</h3>
+            <p>India</p>
+        </div>
+        <div class="contact-item">
+            <div class="contact-item-icon">💼</div>
+            <h3>Business</h3>
+            <p>cu24250022@coeruniversity.ac.in</p>
+        </div>
+    </div>
+</section>
+
+</div>
+
+<button class="back-btn" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i> Back</button>
+
+<script>
+function toggleContactPopup(){
+    const popup=document.getElementById("contact-popup");
+    if(popup.style.display==="none"){
+        popup.style.display="block";
+        popup.style.animation="fadeIn 0.3s ease";
+    } else {
+        popup.style.display="none";
+    }
+}
+
+// Close popup when clicking outside
+document.addEventListener("click",(e)=>{
+    const popup=document.getElementById("contact-popup");
+    if(!popup.contains(e.target) && !e.target.closest(".cta-button")){
+        popup.style.display="none";
+    }
+});
+
+// Add fade-in animation
+const style=document.createElement("style");
+style.textContent=`@keyframes fadeIn{0%{opacity:0;transform:translate(-50%,-55%)}100%{opacity:1;transform:translate(-50%,-50%)}}`;
+document.head.appendChild(style);
+
+let scene,camera,renderer,torus,particles;
+let mouseX=0,mouseY=0;
+
+function enterSite(){
+    document.getElementById("welcome-screen").classList.add("hidden");
+    document.getElementById("main-content").classList.add("active");
+    setTimeout(init3D,500);
+}
+
+// Parallax effect
+window.addEventListener("scroll",()=>{
+    const parallaxElements=document.querySelectorAll(".parallax-element");
+    parallaxElements.forEach((el)=>{
+        const scrollY=window.scrollY;
+        el.style.transform=`translateY(${scrollY*0.5}px)`;
+    });
+});
+
+// Particle effects on scroll
+function createParticles(){
+    const sections=document.querySelectorAll("section");
+    sections.forEach((section)=>{
+        const particlesContainer=document.createElement("div");
+        particlesContainer.style.position="relative";
+        particlesContainer.style.height="50px";
+        
+        for(let i=0;i<5;i++){
+            const particle=document.createElement("div");
+            particle.className="particle";
+            particle.style.left=Math.random()*100+"%";
+            particle.style.top=Math.random()*100+"%";
+            
+            const dot=document.createElement("div");
+            dot.className="particle-dot";
+            dot.style.animationDelay=Math.random()*2+"s";
+            
+            particle.appendChild(dot);
+            particlesContainer.appendChild(particle);
+        }
+        
+        section.style.position="relative";
+    });
+}
+
+createParticles();
+
+function init3D(){
+
+scene = new THREE.Scene();
+
+camera = new THREE.PerspectiveCamera(
+75,
+window.innerWidth/window.innerHeight,
+0.1,
+1000
+);
+camera.position.z = 8;
+
+renderer = new THREE.WebGLRenderer({
+canvas: document.getElementById("bg"),
+alpha: true,
+antialias: true
+});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+
+const reviewGroup = new THREE.Group();
+
+for(let i=0;i<6;i++){
+    const panelGeo = new THREE.BoxGeometry(2.5,1.2,0.1);
+    const panelMat = new THREE.MeshStandardMaterial({
+        color:0xffffff,
+        transparent:true,
+        opacity:0.15,
+        metalness:0.8,
+        roughness:0.1
+    });
+
+    const panel = new THREE.Mesh(panelGeo,panelMat);
+
+    panel.position.x = (Math.random()-0.5)*8;
+    panel.position.y = (Math.random()-0.5)*5;
+    panel.position.z = (Math.random()-0.5)*5;
+
+    reviewGroup.add(panel);
+}
+
+scene.add(reviewGroup);
+
+const barsGroup = new THREE.Group();
+
+for(let i=0;i<10;i++){
+    const height = Math.random()*2+0.5;
+    const barGeo = new THREE.BoxGeometry(0.3,height,0.3);
+    const barMat = new THREE.MeshStandardMaterial({
+        color:0xffffff,
+        emissive:0xffffff,
+        emissiveIntensity:0.4
+    });
+
+    const bar = new THREE.Mesh(barGeo,barMat);
+    bar.position.x = -4 + i*0.8;
+    bar.position.y = -3;
+    bar.position.z = -2;
+
+    barsGroup.add(bar);
+}
+
+scene.add(barsGroup);
+
+const particleCount = 1500;
+const positions = new Float32Array(particleCount * 3);
+
+for(let i=0;i<particleCount*3;i++){
+    positions[i] = (Math.random()-0.5)*20;
+}
+
+const particleGeo = new THREE.BufferGeometry();
+particleGeo.setAttribute(
+"position",
+new THREE.BufferAttribute(positions,3)
+);
+
+const particleMat = new THREE.PointsMaterial({
+size:0.05,
+color:0xffffff,
+transparent:true,
+opacity:0.6
+});
+
+const particles = new THREE.Points(particleGeo,particleMat);
+scene.add(particles);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.7));
+
+const light = new THREE.PointLight(0xffffff,1);
+light.position.set(5,5,5);
+scene.add(light);
+
+let mouseX=0, mouseY=0;
+
+window.addEventListener("mousemove",(e)=>{
+    mouseX=(e.clientX/window.innerWidth)*2-1;
+    mouseY=-(e.clientY/window.innerHeight)*2+1;
+});
+
+window.addEventListener("scroll",()=>{
+    camera.position.z = 8 + window.scrollY*0.002;
+});
+
+window.addEventListener("resize",()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+});
+
+function animate(){
+    requestAnimationFrame(animate);
+
+    reviewGroup.rotation.y += 0.002 + mouseX*0.01;
+    reviewGroup.rotation.x += mouseY*0.01;
+
+    barsGroup.rotation.y += 0.002;
+
+    particles.rotation.y += 0.0005;
+
+    renderer.render(scene,camera);
+}
+
+animate();
+}
+
+</script>
+
+</body>
+</html>
