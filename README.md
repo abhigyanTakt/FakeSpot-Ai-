@@ -90,3 +90,6 @@ OPENAI_API_KEY=your_api_key_here
 - **Image Upload**: Drag-and-drop or click to upload images
 
 Enjoy chatting with your AI review detective! 🕵️‍♂️
+
+
+(it is prototype that's why i am using html or kinda lazy who knows)
