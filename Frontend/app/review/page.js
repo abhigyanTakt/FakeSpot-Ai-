@@ -1,10 +1,8 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import Spline from '@splinetool/react-spline/next';
 import { useState } from 'react';
 import Link from 'next/link';
-
-const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false });
 
 export default function Review() {
   const [messages, setMessages] = useState([
