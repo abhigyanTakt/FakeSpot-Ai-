@@ -7,7 +7,6 @@ from flask_cors import CORS
 from PIL import Image
 import io
 from dotenv import load_dotenv
-import easyocr
 import pandas as pd
 import pdfplumber
 import requests
@@ -39,7 +38,7 @@ client = OpenAI(
   base_url="https://integrate.api.nvidia.com/v1",
   api_key=os.getenv("NVIDIA_API_KEY")
 )
-reader = easyocr.Reader(['en'])  # Initialize OCR reader for English
+# EasyOCR reader will be lazy-loaded only if vision API fails
 
 def detect_user_intent(message):
     """Detect the intent of the user's message"""
@@ -299,12 +298,20 @@ def detect_fake_review_image(image_data):
                 image.save(tmp.name)
                 tmp_path = tmp.name
             
-            results = reader.readtext(tmp_path)
-            extracted_text = "\n".join([text[1] for text in results])
-            os.remove(tmp_path)
+            try:
+                import easyocr
+                reader = easyocr.Reader(['en'])
+                results = reader.readtext(tmp_path)
+                extracted_text = "\n".join([text[1] for text in results])
+            except ImportError:
+                extracted_text = ""
+                print("easyocr is not installed. Skipping OCR fallback.")
+
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
             
             if not extracted_text.strip():
-                return {"is_fake": False, "authenticity_score": 50, "reasoning": "No text found in image, and product vision analysis failed."}
+                return {"is_fake": False, "authenticity_score": 50, "reasoning": "No text found in image, and product vision analysis failed (OCR fallback skipped)."}
             
             return detect_fake_review_text(extracted_text)
             
