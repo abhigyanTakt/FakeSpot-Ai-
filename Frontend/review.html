@@ -248,6 +248,11 @@ nav{
 </div>
 
 <script>
+// Automatically switch API URLs between local testing and production deployment
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://fakespot-api.onrender.com'; // Replace this URL after deploying on Render
+
 // Track cursor movement for robot interaction
 let mouseX = 0;
 let mouseY = 0;
@@ -357,7 +362,7 @@ function sendMessage() {
     // Send to backend API
     if (textToAnalyze) {
         // Send text analysis request
-        fetch('http://localhost:5000/analyze-text', {
+        fetch(`${API_BASE_URL}/analyze-text`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -393,7 +398,7 @@ function sendMessage() {
             const formData = new FormData();
             formData.append('image', blob, 'image.jpg');
 
-            return fetch('http://localhost:5000/analyze-image', {
+            return fetch(`${API_BASE_URL}/analyze-image`, {
                 method: 'POST',
                 body: formData
             });
@@ -417,7 +422,7 @@ function sendMessage() {
         const formData = new FormData();
         formData.append('file', fileToAnalyze);
 
-        fetch('http://localhost:5000/analyze-bulk', {
+        fetch(`${API_BASE_URL}/analyze-bulk`, {
             method: 'POST',
             body: formData
         })
