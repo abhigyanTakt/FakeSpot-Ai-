@@ -11,48 +11,82 @@ export default function Review() {
     { id: 1, text: 'Hello! I\'m here to help you detect fake reviews. Please paste a review text, and I\'ll analyze it for you.', sender: 'bot' }
   ]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (input.trim() === '') return;
 
     const newMessage = { id: Date.now(), text: input, sender: 'user' };
     setMessages([...messages, newMessage]);
     setInput('');
+    setLoading(true);
 
-    setTimeout(() => {
-      const response = analyzeReview(input);
+    try {
+      const response = await analyzeReview(input);
       const botMessage = { id: Date.now() + 1, text: response, sender: 'bot' };
       setMessages(prev => [...prev, botMessage]);
-    }, 1000);
+    } catch (error) {
+      const errorMessage = { id: Date.now() + 1, text: `Error analyzing review: ${error.message}`, sender: 'bot' };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const analyzeReview = (review) => {
-    const fakeIndicators = ['amazing', 'best', 'perfect', 'love it', 'highly recommend'];
-    const realIndicators = ['good', 'okay', 'average', 'decent'];
+  const analyzeReview = async (review) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fakespot-ai.onrender.com';
+      const response = await fetch(`${apiUrl}/detect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ review_text: review }),
+      });
 
-    const lowerReview = review.toLowerCase();
-    let fakeScore = 0;
-    let realScore = 0;
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
 
-    fakeIndicators.forEach(word => {
-      if (lowerReview.includes(word)) fakeScore++;
-    });
+      const data = await response.json();
+      
+      if (data.prediction === 'fake') {
+        return `This review appears to be FAKE (Confidence: ${(data.confidence * 100).toFixed(1)}%). ${data.explanation || 'It contains patterns common in fake reviews.'}`;
+      } else if (data.prediction === 'genuine') {
+        return `This review appears to be GENUINE (Confidence: ${(data.confidence * 100).toFixed(1)}%). ${data.explanation || 'It uses language typical of real customer feedback.'}`;
+      } else {
+        return `Analysis Result: ${data.prediction} (Confidence: ${(data.confidence * 100).toFixed(1)}%). ${data.explanation || 'Unable to determine with certainty.'}`;
+      }
+    } catch (error) {
+      console.error('API Error:', error);
+      // Fallback to local analysis
+      const fakeIndicators = ['amazing', 'best', 'perfect', 'love it', 'highly recommend'];
+      const realIndicators = ['good', 'okay', 'average', 'decent'];
 
-    realIndicators.forEach(word => {
-      if (lowerReview.includes(word)) realScore++;
-    });
+      const lowerReview = review.toLowerCase();
+      let fakeScore = 0;
+      let realScore = 0;
 
-    if (fakeScore > realScore) {
-      return "This review appears to be FAKE. It contains overly positive language that is common in fake reviews.";
-    } else if (realScore > fakeScore) {
-      return "This review appears to be GENUINE. It uses balanced language typical of real customer feedback.";
-    } else {
-      return "This review is UNCERTAIN. It doesn't strongly match patterns of fake or genuine reviews.";
+      fakeIndicators.forEach(word => {
+        if (lowerReview.includes(word)) fakeScore++;
+      });
+
+      realIndicators.forEach(word => {
+        if (lowerReview.includes(word)) realScore++;
+      });
+
+      if (fakeScore > realScore) {
+        return "This review appears to be FAKE. It contains overly positive language that is common in fake reviews. (Offline Mode)";
+      } else if (realScore > fakeScore) {
+        return "This review appears to be GENUINE. It uses balanced language typical of real customer feedback. (Offline Mode)";
+      } else {
+        return "This review is UNCERTAIN. It doesn't strongly match patterns of fake or genuine reviews. (Offline Mode)";
+      }
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !loading) {
       sendMessage();
     }
   };
@@ -148,6 +182,7 @@ export default function Review() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
+            disabled={loading}
             placeholder="Enter your review text here..."
             style={{
               flex: 1,
@@ -155,22 +190,26 @@ export default function Review() {
               background: 'rgba(255,255,255,0.08)',
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '25px',
-              color: '#fff'
+              color: '#fff',
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'not-allowed' : 'text'
             }}
           />
           <button
             onClick={sendMessage}
+            disabled={loading}
             style={{
               padding: '15px 25px',
-              background: '#fff',
-              color: '#000',
+              background: loading ? '#cccccc' : '#fff',
+              color: loading ? '#666' : '#000',
               border: 'none',
               borderRadius: '25px',
-              cursor: 'pointer',
-              fontWeight: 600
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: 600,
+              opacity: loading ? 0.6 : 1
             }}
           >
-            Send
+            {loading ? 'Analyzing...' : 'Send'}
           </button>
         </div>
       </div>
