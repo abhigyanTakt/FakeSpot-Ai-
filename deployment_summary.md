@@ -1,6 +1,9 @@
 # 🚀 FakeSpot AI - Deployment & Setup Summary
 
+> 💡 **Developer's Note:** I didn't fully know what I was doing at the start of this project, but I am learning step-by-step by partnering with AI—much like a pilot reading the flight manual to plot a course while already in mid-air. ✈️🤖
+
 This document log summarizes the development fixes, configuration updates, and hosting setups completed to deploy the project live on the internet.
+
 
 ---
 
