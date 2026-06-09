@@ -1,9 +1,9 @@
 # FakeSpot AI - Conversational Review Detector 🤖
 
 > 💡 **Developer's Note:** I didn't fully know what I was doing at the start of this project, but I am learning step-by-step by partnering with AI—much like a pilot reading the flight manual to plot a course while already in mid-air. ✈️🤖
+<img width="523" height="376" alt="image" src="https://github.com/user-attachments/assets/5081de8c-74cb-4cf1-aa47-ead2b27e4e62" />
 
 An advanced AI-powered system that detects fake reviews through both text analysis and image recognition, with full conversational capabilities.
-<img width="629" height="376" alt="image" src="https://github.com/user-attachments/assets/5081de8c-74cb-4cf1-aa47-ead2b27e4e62" />
 
 
 ## ✨ Features
