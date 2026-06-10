@@ -37,10 +37,10 @@ cd Backend
 pip install -r requirements.txt
 python review.py
 ```
-Server runs on `https://fake-spot-ai-9rwz.vercel.app/`
+Server runs on [Fake Spot AI](https://fake-spot-ai-9rwz.vercel.app/)
 
 ### Frontend
-Open `https://fake-spot-ai-9rwz.vercel.app/` in your browser
+Open [Fake Spot AI](https://fake-spot-ai-9rwz.vercel.app/)in your browser
 
 ### Backend
 Backend runs on Render (cant provide link cause i am at the end of ropes due to subscription requirements.)
