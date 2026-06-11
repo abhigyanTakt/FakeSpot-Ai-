@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Spline from '@splinetool/react-spline/next';
 
 export default function Home() {
   const [entered, setEntered] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const splineBgRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,6 +16,20 @@ export default function Home() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+      const mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+      if (splineBgRef.current) {
+        const rotateX = mouseY * 5;
+        const rotateY = mouseX * 5;
+        splineBgRef.current.style.transform = `scale(1.5) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   const enterSite = () => {
@@ -45,10 +61,9 @@ export default function Home() {
         opacity: entered ? 0 : 1,
         pointerEvents: entered ? 'none' : 'all'
       }}>
-        <iframe 
-          src="https://prod.spline.design/8HpdKLdA2VXvUEKK/scene.splinecode" 
-          style={{ position: 'absolute', width: '100%', height: '100%', border: 'none', transform: 'scale(1.3)', zIndex: 1 }}
-        />
+        <div style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 1 }}>
+          <Spline scene="https://prod.spline.design/8HpdKLdA2VXvUEKK/scene.splinecode" />
+        </div>
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', background: 'rgba(0,0,0,0.4)', padding: '40px', borderRadius: '20px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <h1 style={{ fontSize: '4rem', letterSpacing: '2px', fontWeight: 800, marginBottom: '15px' }}>Welcome to FakeSpot</h1>
           <p style={{ fontSize: '1.2rem', color: '#cccccc', fontWeight: 300, letterSpacing: '1px' }}>Detect Fake Reviews With AI</p>
@@ -82,9 +97,8 @@ export default function Home() {
       </div>
 
       {/* 2. DYNAMIC SPLINE BACKGROUND */}
-      <iframe 
-        id="spline-bg" 
-        src="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/"
+      <div 
+        ref={splineBgRef}
         style={{
           position: 'fixed',
           top: 0,
@@ -92,11 +106,13 @@ export default function Home() {
           width: '100%',
           height: '100%',
           zIndex: 0,
-          border: 'none',
           transform: 'scale(1.5)',
-          transformOrigin: 'center'
+          transformOrigin: 'center',
+          transition: 'transform 0.1s ease-out'
         }}
-      />
+      >
+        <Spline scene="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/" />
+      </div>
 
       {/* 3. NAVBAR */}
       <nav style={{

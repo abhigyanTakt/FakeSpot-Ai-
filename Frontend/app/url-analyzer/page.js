@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Spline from '@splinetool/react-spline/next';
 
 export default function UrlAnalyzer() {
   const [url, setUrl] = useState('');
@@ -115,10 +116,8 @@ export default function UrlAnalyzer() {
     <main style={{ position: 'relative', width: '100vw', minHeight: '100vh', background: '#000', overflowX: 'hidden' }}>
       
       {/* 3D BACKGROUND */}
-      <iframe 
+      <div 
         ref={splineBgRef}
-        id="spline-bg" 
-        src="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/"
         style={{
           position: 'fixed',
           top: 0,
@@ -126,12 +125,13 @@ export default function UrlAnalyzer() {
           width: '100%',
           height: '100%',
           zIndex: -1,
-          border: 'none',
           transform: 'scale(1.5)',
           transformOrigin: 'center',
           transition: 'transform 0.1s ease-out'
         }}
-      />
+      >
+        <Spline scene="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/" />
+      </div>
 
       {/* NAVBAR */}
       <nav style={{
