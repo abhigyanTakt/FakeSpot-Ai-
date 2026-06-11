@@ -37,10 +37,13 @@ cd Backend
 pip install -r requirements.txt
 python review.py
 ```
-Server runs on `http://localhost:5000`
+Server runs on [Fake Spot AI](https://fake-spot-ai-9rwz.vercel.app/)
 
 ### Frontend
-Open `Frontend/review.html` in your browser
+Open [Fake Spot AI](https://fake-spot-ai-9rwz.vercel.app/)in your browser
+
+### Backend
+Backend runs on Render (cant provide link cause i am at the end of ropes due to subscription requirements.)
 
 ## 🎮 How to Use
 
@@ -96,4 +99,4 @@ OPENAI_API_KEY=your_api_key_here
 Enjoy chatting with your AI review detective! 🕵️‍♂️
 
 
-(it is prototype that's why i am using html or kinda lazy who knows)
+(it is prototype and i will be adding improved frameworks , new libraries and improved versions of APIs as learn in daily or in the new feature.)
