@@ -34,13 +34,38 @@ nav{
     width:100%;
     padding:25px 5%;
     display:flex;
-    justify-content:flex-end;
+    justify-content:space-between;
+    align-items:center;
     background:rgba(0,0,0,0.95);
     backdrop-filter:blur(20px);
     z-index:10;
     border-bottom:1px solid var(--border);
     font-weight:600;
     font-size:1.1rem;
+}
+
+.logo-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.nav-links {
+    display: flex;
+    gap: 30px;
+    list-style: none;
+}
+
+.nav-links a {
+    color: #b3b3b3;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    font-weight: 600;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    color: #fff;
 }
 
 #spline-bg{
@@ -220,7 +245,12 @@ nav{
 <body>
 
 <nav>
-    <div>AI-Powered Review Detection</div>
+    <a href="index.html" class="logo-link">FakeSpot</a>
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="review.html" class="active">AI Chat Bot</a></li>
+        <li><a href="url-analyzer.html">URL Analyzer</a></li>
+    </ul>
 </nav>
 
 <iframe id="spline-bg" src="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/"></iframe>

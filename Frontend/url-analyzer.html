@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FakeSpot - URL Analysis</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary: #ffffff;
+    --glass: rgba(0, 0, 0, 0.45);
+    --glass-hover: rgba(0, 0, 0, 0.6);
+    --border: rgba(255, 255, 255, 0.15);
+    --glow-green: rgba(81, 207, 102, 0.4);
+    --glow-red: rgba(255, 107, 107, 0.4);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #000;
+    color: #fff;
+    overflow-x: hidden;
+    letter-spacing: 0.3px;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+}
+
+nav {
+    position: fixed;
+    width: 100%;
+    padding: 25px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.logo-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.nav-links {
+    display: flex;
+    gap: 30px;
+    list-style: none;
+}
+
+.nav-links a {
+    color: #b3b3b3;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    color: #fff;
+}
+
+#spline-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    border: none;
+    transform: scale(1.5);
+    transform-origin: center;
+}
+
+.back-btn {
+    position: absolute;
+    top: 100px;
+    left: 5%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    z-index: 11;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.analyzer-container {
+    position: relative;
+    max-width: 850px;
+    width: 90%;
+    margin: 160px auto 50px auto;
+    padding: 40px;
+    background: var(--glass);
+    backdrop-filter: blur(25px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    z-index: 1;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.header-group {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.header-group h2 {
+    font-size: 2.5rem;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #ffffff 0%, #a5a5a5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-group p {
+    color: #b3b3b3;
+    font-size: 1.1rem;
+    font-weight: 300;
+}
+
+.input-wrapper {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.url-input {
+    flex: 1;
+    min-width: 280px;
+    padding: 18px 24px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.url-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 15px rgba(255,255,255,0.05);
+}
+
+.analyze-btn {
+    padding: 18px 36px;
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.analyze-btn:hover:not(:disabled) {
+    background: #f0f0f0;
+    transform: scale(1.02);
+}
+
+.analyze-btn:disabled {
+    background: #666;
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.results-card {
+    border-top: 1px solid var(--border);
+    padding-top: 35px;
+    display: none;
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+    align-items: start;
+}
+
+@media(max-width: 768px) {
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.score-box {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.score-circle-wrapper {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin-bottom: 20px;
+}
+
+.score-svg {
+    transform: rotate(-90deg);
+    width: 140px;
+    height: 140px;
+}
+
+.score-circle-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.08);
+    stroke-width: 10;
+}
+
+.score-circle-bar {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s ease-in-out;
+}
+
+.score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.verdict-badge {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.verdict-badge.fake {
+    background: rgba(255, 107, 107, 0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.15);
+}
+
+.verdict-badge.genuine {
+    background: rgba(81, 207, 102, 0.15);
+    color: #51cf66;
+    border: 1px solid rgba(81, 207, 102, 0.3);
+    box-shadow: 0 0 15px rgba(81, 207, 102, 0.15);
+}
+
+.details-box {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 30px;
+}
+
+.details-box h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.details-text {
+    line-height: 1.8;
+    color: #e0e0e0;
+    font-size: 1.05rem;
+    white-space: pre-line;
+}
+
+.loader-container {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin: 0 auto 20px auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 1.1rem;
+    color: #b3b3b3;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.error-message {
+    display: none;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 12px;
+    padding: 15px 20px;
+    color: #ff6b6b;
+    margin-bottom: 25px;
+    font-weight: 500;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+    <a href="index.html" class="logo-link">FakeSpot</a>
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="review.html">AI Chat Bot</a></li>
+        <li><a href="url-analyzer.html" class="active">URL Analyzer</a></li>
+    </ul>
+</nav>
+
+<iframe id="spline-bg" src="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/"></iframe>
+
+<a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+<div class="analyzer-container">
+    <div class="header-group">
+        <h2>Product URL Analyzer</h2>
+        <p>Scan e-commerce product pages directly to determine the legitimacy of reviews.</p>
+    </div>
+
+    <div class="error-message" id="error-box"></div>
+
+    <div class="input-wrapper">
+        <input type="text" id="product-url" class="url-input" placeholder="Paste Amazon, Flipkart, or e-commerce URL here..." autocomplete="off">
+        <button id="analyze-btn" class="analyze-btn" onclick="startUrlAnalysis()">
+            <i class="fas fa-search"></i> Analyze
+        </button>
+    </div>
+
+    <div class="loader-container" id="loader">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-message">Scraping page content & analyzing reviews...</div>
+    </div>
+
+    <div class="results-card" id="results-card">
+        <div class="results-grid">
+            <div class="score-box">
+                <div class="score-circle-wrapper">
+                    <svg class="score-svg">
+                        <circle class="score-circle-bg" cx="70" cy="70" r="60"></circle>
+                        <circle id="score-circle" class="score-circle-bar" cx="70" cy="70" r="60" stroke-dasharray="377" stroke-dashoffset="377"></circle>
+                    </svg>
+                    <div class="score-text" id="score-val">0%</div>
+                </div>
+                <div id="verdict" class="verdict-badge">Genuine</div>
+            </div>
+
+            <div class="details-box">
+                <h3>Authenticity Report</h3>
+                <div class="details-text" id="analysis-reasoning"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://fakespot-ai.onrender.com';
+
+// Track cursor movement for robot interaction (matches review.html)
+let mouseX = 0;
+let mouseY = 0;
+
+document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    
+    const splineBg = document.getElementById('spline-bg');
+    const rotateX = mouseY * 5;
+    const rotateY = mouseX * 5;
+    
+    splineBg.style.transform = `scale(1.5) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+});
+
+function startUrlAnalysis() {
+    const urlInput = document.getElementById('product-url');
+    const url = urlInput.value.trim();
+    const errorBox = document.getElementById('error-box');
+    const loader = document.getElementById('loader');
+    const resultsCard = document.getElementById('results-card');
+    const analyzeBtn = document.getElementById('analyze-btn');
+
+    if (!url) {
+        showError('Please enter a valid URL to analyze.');
+        return;
+    }
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        showError('The URL must start with http:// or https://');
+        return;
+    }
+
+    // Reset states
+    errorBox.style.display = 'none';
+    resultsCard.style.display = 'none';
+    loader.style.display = 'block';
+    analyzeBtn.disabled = true;
+
+    // Loading rotation messages
+    const messages = [
+        "Connecting to e-commerce source... 🌐",
+        "Scraping review contents... 🕷️",
+        "Feeding reviews into NLP model... 🧠",
+        "Checking language consistency... 🔍",
+        "Generating final safety verdict... 🤖"
+    ];
+    let msgIndex = 0;
+    const msgInterval = setInterval(() => {
+        msgIndex = (msgIndex + 1) % messages.length;
+        document.getElementById('loading-message').innerText = messages[msgIndex];
+    }, 2500);
+
+    fetch(`${API_BASE_URL}/analyze-url`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Server error occurred during URL parsing.');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        clearInterval(msgInterval);
+        loader.style.display = 'none';
+        analyzeBtn.disabled = false;
+        showResults(data);
+    })
+    .catch(error => {
+        clearInterval(msgInterval);
+        loader.style.display = 'none';
+        analyzeBtn.disabled = false;
+        showError(error.message || 'Error connecting to API. Please make sure the backend is running.');
+    });
+}
+
+function showResults(data) {
+    const resultsCard = document.getElementById('results-card');
+    const scoreValEl = document.getElementById('score-val');
+    const circle = document.getElementById('score-circle');
+    const verdictEl = document.getElementById('verdict');
+    const reasoningEl = document.getElementById('analysis-reasoning');
+
+    // Extract values from response
+    const analysis = data.analysis || {};
+    const score = analysis.authenticity_score !== undefined ? analysis.authenticity_score : 50;
+    const isFake = analysis.is_fake !== undefined ? analysis.is_fake : false;
+    const reasoning = analysis.reasoning || data.result || 'No reasoning details returned.';
+
+    // Set text details
+    scoreValEl.innerText = `${score}%`;
+    reasoningEl.innerText = reasoning;
+
+    // Set circular progress bar offset
+    // Radius = 60, circumference = 2 * PI * r = ~377
+    const circumference = 377;
+    const offset = circumference - (score / 100) * circumference;
+    circle.style.strokeDashoffset = offset;
+
+    // Update colors based on rating
+    if (isFake) {
+        verdictEl.innerText = 'Suspected Fake';
+        verdictEl.className = 'verdict-badge fake';
+        circle.style.stroke = '#ff6b6b';
+        scoreValEl.style.color = '#ff6b6b';
+    } else {
+        verdictEl.innerText = 'Verified Genuine';
+        verdictEl.className = 'verdict-badge genuine';
+        circle.style.stroke = '#51cf66';
+        scoreValEl.style.color = '#51cf66';
+    }
+
+    resultsCard.style.display = 'block';
+}
+
+function showError(msg) {
+    const errorBox = document.getElementById('error-box');
+    errorBox.innerText = msg;
+    errorBox.style.display = 'block';
+    errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>

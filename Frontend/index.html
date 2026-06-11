@@ -259,12 +259,37 @@ nav{
     padding:25px 5%;
     display:flex;
     justify-content:space-between;
+    align-items:center;
     background:rgba(0,0,0,0.95);
     backdrop-filter:blur(20px);
     z-index:10;
     border-bottom:1px solid var(--border);
     font-weight:600;
     font-size:1.1rem;
+}
+
+.logo-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.nav-links {
+    display: flex;
+    gap: 30px;
+    list-style: none;
+}
+
+.nav-links a {
+    color: #b3b3b3;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    font-weight: 600;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    color: #fff;
 }
 
 canvas{
@@ -578,8 +603,12 @@ section h2{
 <div id="main-content">
 
 <nav>
-    <div>FakeSpot</div>
-    <div>AI-Powered Review Detection</div>
+    <a href="index.html" class="logo-link">FakeSpot</a>
+    <ul class="nav-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="review.html">AI Chat Bot</a></li>
+        <li><a href="url-analyzer.html">URL Analyzer</a></li>
+    </ul>
 </nav>
 
 <header class="hero parallax-section">
@@ -588,7 +617,10 @@ section h2{
     <div style="position:relative;z-index:2;">
         <h2>Detect Fake Reviews With AI</h2>
         <p>Advanced machine learning powered detection system</p>
-        <button class="enter-btn" style="padding:16px 60px;font-size:1.1rem;" onclick="window.location.href='review.html'">Get Started</button>
+        <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-top:30px;">
+            <button class="enter-btn" style="padding:16px 40px; font-size:1.1rem; margin-top:0;" onclick="window.location.href='review.html'">AI Chat Bot</button>
+            <button class="enter-btn" style="padding:16px 40px; font-size:1.1rem; margin-top:0; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);" onclick="window.location.href='url-analyzer.html'">URL Analyzer</button>
+        </div>
     </div>
 </header>
 
