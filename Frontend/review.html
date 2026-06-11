@@ -31,6 +31,8 @@ h1,h2,h3,h4,h5,h6{
 
 nav{
     position:fixed;
+    top: 0;
+    left: 0;
     width:100%;
     padding:25px 5%;
     display:flex;
@@ -208,24 +210,7 @@ nav{
     transform:scale(1.05);
 }
 
-.back-btn{
-    position:absolute;
-    top:25px;
-    left: 5%;
-    background:rgba(255,255,255,0.08);
-    border:1px solid var(--border);
-    color:#fff;
-    padding:10px 20px;
-    border-radius:25px;
-    cursor:pointer;
-    font-weight:600;
-    transition:all 0.3s ease;
-    z-index:11;
-}
 
-.back-btn:hover{
-    background:rgba(255,255,255,0.15);
-}
 
 .typing-dots {
     animation: typing 1.5s infinite;
@@ -255,7 +240,6 @@ nav{
 
 <iframe id="spline-bg" src="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/"></iframe>
 
-<button class="back-btn" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i> Back</button>
 
 <div class="chat-container">
     <div class="chat-messages" id="chat-messages">
