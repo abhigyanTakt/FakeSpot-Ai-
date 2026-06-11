@@ -1,86 +1,235 @@
 'use client';
 
-import Spline from '@splinetool/react-spline/next';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Review() {
   const [messages, setMessages] = useState([
-    { id: 1, text: 'Hello! I\'m here to help you detect fake reviews. Please paste a review text, and I\'ll analyze it for you.', sender: 'bot' }
+    {
+      id: 1,
+      text: "Hello! 👋 I'm your AI review detective! I can analyze both text reviews and images to help you spot fake reviews. Just paste a review, upload an image, or say hi - I'm here to help! 😊",
+      sender: 'bot'
+    }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('Analyzing...');
+  
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const chatMessagesEndRef = useRef(null);
+  const splineBgRef = useRef(null);
+
+  // Dynamic API base URL switching
+  const getApiUrl = () => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      return (hostname === 'localhost' || hostname === '127.0.0.1')
+        ? 'http://localhost:5000'
+        : 'https://fakespot-ai.onrender.com';
+    }
+    return 'https://fakespot-ai.onrender.com';
+  };
+
+  // Parallax cursor tracking for robot background
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+      const mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+      if (splineBgRef.current) {
+        const rotateX = mouseY * 5;
+        const rotateY = mouseX * 5;
+        splineBgRef.current.style.transform = `scale(1.5) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Auto scroll to bottom of chat
+  useEffect(() => {
+    chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSelectedImage(event.target.result);
+        setSelectedFile(null); // Clear file upload
+        // Append preview image in user message
+        const newMsg = {
+          id: Date.now(),
+          text: '',
+          image: event.target.result,
+          sender: 'user'
+        };
+        setMessages((prev) => [...prev, newMsg]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setSelectedImage(null); // Clear image upload
+      const newMsg = {
+        id: Date.now(),
+        text: `File attached: ${file.name}`,
+        sender: 'user',
+        isFile: true
+      };
+      setMessages((prev) => [...prev, newMsg]);
+    }
+  };
 
   const sendMessage = async () => {
-    if (input.trim() === '') return;
+    const textToAnalyze = input.trim();
+    const imageToAnalyze = selectedImage;
+    const fileToAnalyze = selectedFile;
 
-    const newMessage = { id: Date.now(), text: input, sender: 'user' };
-    setMessages([...messages, newMessage]);
+    if (!textToAnalyze && !imageToAnalyze && !fileToAnalyze) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "Hi! I'm here to help you analyze reviews. You can paste review text, upload an image/file, or just say hello! 😊",
+          sender: 'bot'
+        }
+      ]);
+      return;
+    }
+
+    // Reset input fields
     setInput('');
+    setSelectedImage(null);
+    setSelectedFile(null);
+
+    // Show user message if they typed something
+    if (textToAnalyze) {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), text: textToAnalyze, sender: 'user' }
+      ]);
+    }
+
     setLoading(true);
 
+    const typingMsgs = [
+      'Analyzing your message... 🔍',
+      'Processing with AI... 🤖',
+      'Checking for authenticity... ✅',
+      'Examining patterns... 📊'
+    ];
+    setLoadingMsg(typingMsgs[Math.floor(Math.random() * typingMsgs.length)]);
+
     try {
-      const response = await analyzeReview(input);
-      const botMessage = { id: Date.now() + 1, text: response, sender: 'bot' };
-      setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
-      const errorMessage = { id: Date.now() + 1, text: `Error analyzing review: ${error.message}`, sender: 'bot' };
-      setMessages(prev => [...prev, errorMessage]);
+      const API_BASE_URL = getApiUrl();
+
+      if (textToAnalyze) {
+        const response = await fetch(`${API_BASE_URL}/analyze-text`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: textToAnalyze })
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          addBotMessage(`Error: ${data.error}`, 'fake-result');
+        } else {
+          if (data.intent === 'greeting' || data.intent === 'casual' || data.intent === 'capabilities') {
+            addBotMessage(data.result);
+          } else {
+            const statusClass = data.analysis && data.analysis.is_fake ? 'fake-result' : 'genuine-result';
+            addBotMessage(data.result, statusClass);
+          }
+        }
+      } 
+      
+      else if (imageToAnalyze) {
+        const res = await fetch(imageToAnalyze);
+        const blob = await res.blob();
+        const formData = new FormData();
+        formData.append('image', blob, 'image.jpg');
+
+        const response = await fetch(`${API_BASE_URL}/analyze-image`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          addBotMessage(`Error: ${data.error}`, 'fake-result');
+        } else {
+          const statusClass = data.analysis && data.analysis.is_fake ? 'fake-result' : 'genuine-result';
+          addBotMessage(data.result, statusClass);
+        }
+      } 
+      
+      else if (fileToAnalyze) {
+        const formData = new FormData();
+        formData.append('file', fileToAnalyze);
+
+        const response = await fetch(`${API_BASE_URL}/analyze-bulk`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        
+        const data = await response.json();
+
+        if (data.error) {
+          addBotMessage(`Error: ${data.error}`, 'fake-result');
+        } else {
+          let report = `<strong>Bulk Analysis Complete!</strong><br/>`;
+          report += `Total Reviews Found: ${data.total_found}<br/>`;
+          report += `Overall Authenticity Percentage: <strong>${data.accuracy_percentage.toFixed(1)}%</strong><br/><br/>`;
+          report += `<em>Top Findings:</em><br/>`;
+          
+          let fakeCount = 0;
+          data.results.forEach((res) => {
+            const isFake = res.analysis.is_fake;
+            if (isFake) fakeCount++;
+            const status = isFake 
+              ? '<span style="color:#ff6b6b">❌ Fake</span>' 
+              : '<span style="color:#51cf66">✅ Genuine</span>';
+            report += `• "${res.review}" - <strong>${status}</strong> (${res.analysis.authenticity_score}%)<br/>`;
+          });
+
+          const overallStatusClass = (fakeCount > data.results.length / 2) ? 'fake-result' : 'genuine-result';
+          addBotMessage(report, overallStatusClass);
+        }
+      }
+
+    } catch (err) {
+      console.error(err);
+      addBotMessage('Error connecting to AI service. Please make sure your backend is online.', 'fake-result');
     } finally {
       setLoading(false);
     }
   };
 
-  const analyzeReview = async (review) => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fakespot-ai.onrender.com';
-      const response = await fetch(`${apiUrl}/detect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ review_text: review }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+  const addBotMessage = (text, statusClass = '') => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        text: text,
+        sender: 'bot',
+        statusClass: statusClass
       }
-
-      const data = await response.json();
-      
-      if (data.prediction === 'fake') {
-        return `This review appears to be FAKE (Confidence: ${(data.confidence * 100).toFixed(1)}%). ${data.explanation || 'It contains patterns common in fake reviews.'}`;
-      } else if (data.prediction === 'genuine') {
-        return `This review appears to be GENUINE (Confidence: ${(data.confidence * 100).toFixed(1)}%). ${data.explanation || 'It uses language typical of real customer feedback.'}`;
-      } else {
-        return `Analysis Result: ${data.prediction} (Confidence: ${(data.confidence * 100).toFixed(1)}%). ${data.explanation || 'Unable to determine with certainty.'}`;
-      }
-    } catch (error) {
-      console.error('API Error:', error);
-      // Fallback to local analysis
-      const fakeIndicators = ['amazing', 'best', 'perfect', 'love it', 'highly recommend'];
-      const realIndicators = ['good', 'okay', 'average', 'decent'];
-
-      const lowerReview = review.toLowerCase();
-      let fakeScore = 0;
-      let realScore = 0;
-
-      fakeIndicators.forEach(word => {
-        if (lowerReview.includes(word)) fakeScore++;
-      });
-
-      realIndicators.forEach(word => {
-        if (lowerReview.includes(word)) realScore++;
-      });
-
-      if (fakeScore > realScore) {
-        return "This review appears to be FAKE. It contains overly positive language that is common in fake reviews. (Offline Mode)";
-      } else if (realScore > fakeScore) {
-        return "This review appears to be GENUINE. It uses balanced language typical of real customer feedback. (Offline Mode)";
-      } else {
-        return "This review is UNCERTAIN. It doesn't strongly match patterns of fake or genuine reviews. (Offline Mode)";
-      }
-    }
+    ]);
   };
 
   const handleKeyPress = (e) => {
@@ -90,17 +239,37 @@ export default function Review() {
   };
 
   return (
-    <main style={{ position: 'relative', width: '100vw', height: '100vh', background: 'transparent' }}>
-      <Spline
-        scene="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/"
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1 }}
+    <main style={{ position: 'relative', width: '100vw', height: '100vh', background: 'transparent', overflow: 'hidden' }}>
+      
+      {/* 3D BACKGROUND */}
+      <iframe 
+        ref={splineBgRef}
+        id="spline-bg" 
+        src="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: -1,
+          border: 'none',
+          transform: 'scale(1.5)',
+          transformOrigin: 'center',
+          transition: 'transform 0.1s ease-out'
+        }}
       />
+
+      {/* NAVBAR */}
       <nav style={{
         position: 'fixed',
+        top: 0,
+        left: 0,
         width: '100%',
         padding: '25px 5%',
         display: 'flex',
         justifyContent: 'space-between',
+        alignItems: 'center',
         background: 'rgba(0,0,0,0.95)',
         backdropFilter: 'blur(20px)',
         zIndex: 10,
@@ -108,45 +277,37 @@ export default function Review() {
         fontWeight: 600,
         fontSize: '1.1rem'
       }}>
-        <div>FakeSpot</div>
-        <div>AI-Powered Review Detection</div>
+        <Link href="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '1.3rem', fontWeight: 800 }}>
+          FakeSpot
+        </Link>
+        <div style={{ display: 'flex', gap: '30px', listStyle: 'none' }}>
+          <Link href="/" style={{ color: '#b3b3b3', textDecoration: 'none' }}>Home</Link>
+          <Link href="/review" style={{ color: '#fff', textDecoration: 'none' }}>AI Chat Bot</Link>
+          <Link href="/url-analyzer" style={{ color: '#b3b3b3', textDecoration: 'none' }}>URL Analyzer</Link>
+        </div>
       </nav>
-      <Link href="/">
-        <button
-          style={{
-            position: 'absolute',
-            top: '25px',
-            left: '5%',
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            color: '#fff',
-            padding: '10px 20px',
-            borderRadius: '25px',
-            cursor: 'pointer',
-            fontWeight: 600,
-            zIndex: 11
-          }}
-        >
-          ← Back
-        </button>
-      </Link>
+
+      {/* CHAT CONTAINER */}
       <div style={{
         position: 'absolute',
-        top: '50%',
+        top: '55%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        maxWidth: '800px',
+        maxWidth: '1000px',
         width: '90%',
         padding: '20px',
-        background: 'rgba(0,0,0,0.8)',
-        backdropFilter: 'blur(20px)',
+        background: 'rgba(0,0,0,0.3)',
         border: '1px solid rgba(255,255,255,0.15)',
         borderRadius: '20px',
         display: 'flex',
         flexDirection: 'column',
         height: '70vh',
-        zIndex: 1
+        zIndex: 1,
+        boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(10px)'
       }}>
+        
+        {/* MESSAGES VIEW */}
         <div style={{
           flex: 1,
           overflowY: 'auto',
@@ -155,62 +316,194 @@ export default function Review() {
           flexDirection: 'column',
           gap: '15px'
         }}>
-          {messages.map(msg => (
-            <div key={msg.id} style={{
+          {messages.map((msg) => (
+            <div 
+              key={msg.id} 
+              className={`message-bubble ${msg.sender} ${msg.statusClass || ''}`}
+              style={{
+                padding: '15px 20px',
+                borderRadius: '20px',
+                maxWidth: '70%',
+                wordWrap: 'break-word',
+                fontSize: '1.05rem',
+                fontWeight: 500,
+                alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                background: msg.sender === 'user'
+                  ? 'linear-gradient(135deg, #d0d0d0 0%, #b0b0b0 100%)'
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%)',
+                color: msg.sender === 'user' ? '#000' : '#fff',
+                border: msg.statusClass === 'fake-result'
+                  ? '1px solid rgba(255, 107, 107, 0.4)'
+                  : msg.statusClass === 'genuine-result'
+                    ? '1px solid rgba(81, 207, 102, 0.4)'
+                    : 'none',
+                boxShadow: msg.statusClass === 'fake-result'
+                  ? '0 0 10px rgba(255, 107, 107, 0.2)'
+                  : msg.statusClass === 'genuine-result'
+                    ? '0 0 10px rgba(81, 207, 102, 0.2)'
+                    : 'none'
+              }}
+            >
+              <strong>{msg.sender === 'user' ? 'You:' : 'FakeSpot AI:'} </strong>
+              
+              {msg.image ? (
+                <img 
+                  src={msg.image} 
+                  alt="Review Screenshot" 
+                  style={{ maxWidth: '100px', maxHeight: '100px', borderRadius: '10px', marginTop: '5px' }} 
+                />
+              ) : (
+                <span dangerouslySetInnerHTML={{ __html: msg.text }} />
+              )}
+            </div>
+          ))}
+
+          {loading && (
+            <div style={{
               padding: '15px 20px',
               borderRadius: '20px',
               maxWidth: '70%',
-              wordWrap: 'break-word',
-              background: msg.sender === 'user' ? 'linear-gradient(135deg,#ffffff 0%,#f0f0f0 100%)' : 'linear-gradient(135deg,rgba(255,255,255,0.1) 0%,rgba(255,255,255,0.05) 100%)',
-              color: msg.sender === 'user' ? '#000' : '#fff',
-              alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start'
+              alignSelf: 'flex-start',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
+              color: '#fff',
+              fontSize: '1.05rem',
+              fontWeight: 500
             }}>
-              <strong>{msg.sender === 'user' ? 'You:' : 'FakeSpot AI:'}</strong> {msg.text}
+              <strong>FakeSpot AI: </strong> {loadingMsg} <span className="typing-dots">...</span>
             </div>
-          ))}
+          )}
+          
+          <div ref={chatMessagesEndRef} />
         </div>
+
+        {/* INPUT FORM BLOCK */}
         <div style={{
           display: 'flex',
           gap: '10px',
-          padding: '20px',
-          borderTop: '1px solid rgba(255,255,255,0.15)'
+          padding: '20px 10px 10px 10px',
+          borderTop: '1px solid rgba(255,255,255,0.15)',
+          alignItems: 'center'
         }}>
-          <input
+          {/* 1. Image Upload Icon Button */}
+          <label 
+            title="Upload Image"
+            style={{
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              color: '#fff',
+              padding: '12px 14px',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '25px',
+              border: '1px solid rgba(255,255,255,0.15)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          >
+            <i className="fas fa-image"></i>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleImageChange} 
+              style={{ display: 'none' }} 
+            />
+          </label>
+
+          {/* 2. File Bulk Upload Icon Button */}
+          <label 
+            title="Upload PDF/Excel/CSV"
+            style={{
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              color: '#fff',
+              padding: '12px 14px',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '25px',
+              border: '1px solid rgba(255,255,255,0.15)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          >
+            <i className="fas fa-file-upload"></i>
+            <input 
+              type="file" 
+              accept=".pdf,.xlsx,.xls,.csv" 
+              onChange={handleFileChange} 
+              style={{ display: 'none' }} 
+            />
+          </label>
+
+          {/* 3. Text Message Input Box */}
+          <input 
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={loading}
-            placeholder="Enter your review text here..."
+            placeholder={
+              selectedImage 
+                ? "Send image file..." 
+                : selectedFile 
+                  ? "Send bulk review document..." 
+                  : "Enter your review text here..."
+            }
             style={{
               flex: 1,
               padding: '15px 20px',
-              background: 'rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.15)',
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '25px',
               color: '#fff',
-              opacity: loading ? 0.6 : 1,
-              cursor: loading ? 'not-allowed' : 'text'
+              fontSize: '1.1rem',
+              fontWeight: 500,
+              outline: 'none'
             }}
           />
-          <button
+
+          {/* 4. Action Button */}
+          <button 
             onClick={sendMessage}
             disabled={loading}
             style={{
               padding: '15px 25px',
-              background: loading ? '#cccccc' : '#fff',
-              color: loading ? '#666' : '#000',
+              background: '#fff',
+              color: '#000',
               border: 'none',
               borderRadius: '25px',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
               fontWeight: 600,
-              opacity: loading ? 0.6 : 1
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = '#f0f0f0';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = '#fff';
+              e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            {loading ? 'Analyzing...' : 'Send'}
+            Send
           </button>
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes typing {
+          0%, 60%, 100% { opacity: 0.3; }
+          30% { opacity: 1; }
+        }
+        .typing-dots {
+          animation: typing 1.5s infinite;
+        }
+      `}</style>
     </main>
   );
 }
