@@ -220,26 +220,33 @@ def extract_reviews_from_excel(file_stream, filename):
         return []
 
 def scrape_reviews_from_url(url):
-    """Scrape review-like content from a URL"""
+    """Scrape review-like content from a URL using Jina Reader to bypass bot blocks"""
     try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers, timeout=10)
-        soup = BeautifulSoup(response.content, 'html.parser')
+        # Prepend Jina Reader API URL to route the scrape request
+        jina_url = f"https://r.jina.ai/{url}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        print(f"Scraping URL via Jina Reader: {jina_url}")
+        response = requests.get(jina_url, headers=headers, timeout=15)
         
-        # Remove script and style elements
-        for element in soup(["script", "style"]):
-            element.decompose()
-
-        # Get text
-        text = soup.get_text()
-        
-        # Simple cleanup: keep lines with reasonable length (likely reviews)
-        lines = (line.strip() for line in text.splitlines())
-        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-        text = '\n'.join(chunk for chunk in chunks if len(chunk) > 30)
-        
-        return text[:5000] # Limit to first 5000 chars for analysis
+        if response.status_code == 200:
+            return response.text[:8000] # Return parsed markdown up to 8000 chars
+        else:
+            print(f"Jina Reader returned status code {response.status_code}. Falling back to BeautifulSoup.")
+            # Fallback to standard BeautifulSoup if Jina fails
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            resp = requests.get(url, headers=headers, timeout=10)
+            soup = BeautifulSoup(resp.content, 'html.parser')
+            for element in soup(["script", "style"]):
+                element.decompose()
+            text = soup.get_text()
+            lines = (line.strip() for line in text.splitlines())
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            text = '\n'.join(chunk for chunk in chunks if len(chunk) > 30)
+            return text[:5000]
     except Exception as e:
+        print(f"Scraping error: {e}")
         return f"Error scraping URL: {str(e)}"
 
 def detect_fake_review_image(image_data):
