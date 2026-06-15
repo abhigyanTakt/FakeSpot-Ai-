@@ -155,9 +155,9 @@ nav {
 
 .analyze-btn {
     padding: 18px 36px;
-    background: #fff;
-    color: #000;
-    border: none;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
     border-radius: 16px;
     cursor: pointer;
     font-weight: 700;
@@ -166,18 +166,28 @@ nav {
     display: flex;
     align-items: center;
     gap: 10px;
+    box-shadow: 0 0 8px rgba(0,242,254,0.1);
 }
 
 .analyze-btn:hover:not(:disabled) {
-    background: #f0f0f0;
+    border-color: #00f2fe;
+    box-shadow: 0 0 20px rgba(0,242,254,0.4), inset 0 0 8px rgba(0,242,254,0.1);
+    text-shadow: 0 0 8px rgba(0,242,254,0.5);
     transform: scale(1.02);
 }
 
+.analyze-btn:active:not(:disabled) {
+    transform: scale(0.96);
+    box-shadow: 0 0 10px rgba(0,242,254,0.3);
+}
+
 .analyze-btn:disabled {
-    background: #666;
-    color: #999;
+    background: rgba(100,100,100,0.2);
+    color: #666;
+    border-color: rgba(255,255,255,0.1);
     cursor: not-allowed;
     opacity: 0.6;
+    box-shadow: none;
 }
 
 .results-card {

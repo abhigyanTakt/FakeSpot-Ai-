@@ -55,9 +55,9 @@ p{
 
 .cta-button{
     padding:16px 28px;
-    background:linear-gradient(135deg,#ffffff 0%,#f0f0f0 100%);
-    color:#000;
-    border:none;
+    background:rgba(255,255,255,0.05);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.25);
     border-radius:50px;
     cursor:pointer;
     font-weight:700;
@@ -66,12 +66,19 @@ p{
     display:flex;
     align-items:center;
     gap:10px;
-    box-shadow:0 10px 40px rgba(255,255,255,0.2);
+    box-shadow:0 0 8px rgba(0,242,254,0.15);
 }
 
 .cta-button:hover{
     transform:scale(1.05);
-    box-shadow:0 15px 50px rgba(255,255,255,0.3);
+    border-color:#00f2fe;
+    box-shadow:0 0 20px rgba(0,242,254,0.4), inset 0 0 8px rgba(0,242,254,0.1);
+    text-shadow:0 0 8px rgba(0,242,254,0.5);
+}
+
+.cta-button:active{
+    transform:scale(0.95);
+    box-shadow:0 0 10px rgba(0,242,254,0.3);
 }
 
 .cta-button i{
@@ -201,20 +208,28 @@ spline-viewer::part(branding) {
 .enter-btn{
     margin-top:40px;
     padding:14px 50px;
-    background:#fff;
-    color:#000;
-    border:none;
+    background:rgba(255,255,255,0.05);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.3);
     border-radius:10px;
     cursor:pointer;
     font-weight:600;
     font-size:1rem;
     transition:all 0.3s ease;
     font-family:'Inter',sans-serif;
+    box-shadow:0 0 8px rgba(0,242,254,0.1);
 }
 
 .enter-btn:hover{
     transform:translateY(-2px);
-    box-shadow:0 20px 40px rgba(255,255,255,0.2);
+    border-color:#00f2fe;
+    box-shadow:0 0 20px rgba(0,242,254,0.4), inset 0 0 8px rgba(0,242,254,0.1);
+    text-shadow:0 0 8px rgba(0,242,254,0.5);
+}
+
+.enter-btn:active{
+    transform:translateY(0px) scale(0.96);
+    box-shadow:0 0 10px rgba(0,242,254,0.3);
 }
 
 /* ================= MAIN ================= */
