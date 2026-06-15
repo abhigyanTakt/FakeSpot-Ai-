@@ -340,6 +340,26 @@ nav {
     font-weight: 500;
     text-align: center;
 }
+
+/* Custom Proximity Cursor */
+.custom-cursor {
+    position: fixed;
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    z-index: 99999;
+    opacity: 0;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+@media (pointer: fine) {
+    html.custom-cursor-active, html.custom-cursor-active * {
+        cursor: none !important;
+    }
+}
 </style>
 </head>
 
@@ -530,6 +550,68 @@ function showError(msg) {
     errorBox.style.display = 'block';
     errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
+
+// Proximity Custom Cursor Script
+(function() {
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+
+    const cursor = document.createElement('div');
+    cursor.className = 'custom-cursor';
+    document.body.appendChild(cursor);
+
+    document.addEventListener('mousemove', (e) => {
+        const mx = e.clientX;
+        const my = e.clientY;
+
+        cursor.style.left = mx + 'px';
+        cursor.style.top = my + 'px';
+
+        const clickables = document.querySelectorAll('a, button, input, textarea, select, [role="button"], .clickable');
+        let minDistance = Infinity;
+        let isHovering = false;
+
+        clickables.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const dx = Math.max(rect.left - mx, 0, mx - rect.right);
+            const dy = Math.max(rect.top - my, 0, my - rect.bottom);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (dx === 0 && dy === 0) {
+                isHovering = true;
+                minDistance = 0;
+            } else if (distance < minDistance) {
+                minDistance = distance;
+            }
+        });
+
+        const maxProximity = 100;
+
+        if (isHovering) {
+            document.documentElement.classList.add('custom-cursor-active');
+            cursor.style.opacity = '1';
+            cursor.style.transform = 'translate(-50%, -50%) scale(1.4)';
+            cursor.style.borderColor = '#00f2fe';
+            cursor.style.boxShadow = '0 0 15px #00f2fe, inset 0 0 5px #00f2fe';
+        } else if (minDistance < maxProximity) {
+            document.documentElement.classList.add('custom-cursor-active');
+            const ratio = 1 - (minDistance / maxProximity);
+            cursor.style.opacity = ratio;
+            cursor.style.transform = `translate(-50%, -50%) scale(${0.6 + ratio * 0.4})`;
+            cursor.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+            cursor.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
+        } else {
+            document.documentElement.classList.remove('custom-cursor-active');
+            cursor.style.opacity = '0';
+            cursor.style.transform = 'translate(-50%, -50%) scale(0)';
+        }
+    });
+
+    document.addEventListener('mouseleave', () => {
+        cursor.style.opacity = '0';
+        cursor.style.transform = 'translate(-50%, -50%) scale(0)';
+        document.documentElement.classList.remove('custom-cursor-active');
+    });
+})();
 </script>
 </body>
 </html>
