@@ -970,74 +970,10 @@ createParticles();
     document.addEventListener("scroll", startVideo);
     document.addEventListener("click", startVideo);
 
-    let lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    let scrollEndTimeout = null;
-    let isReversing = false;
-    let reverseAnimFrame = null;
-    let lastFrameTime = 0;
-    const SCROLL_THRESHOLD = 1;
-
-    function startReversing() {
-        if (isReversing) return;
-        isReversing = true;
-        video.pause();
-        lastFrameTime = performance.now();
-
-        function updateReverse(now) {
-            if (!isReversing) return;
-            const elapsed = now - lastFrameTime;
-            
-            if (elapsed >= 50) { // Limit to max 20fps seeking rate so the browser's video decoder doesn't lock up
-                lastFrameTime = now;
-                
-                if (!video.seeking && !isNaN(video.duration)) {
-                    // Scrub backward by 1.5x time step
-                    let step = (elapsed / 1000) * 1.5;
-                    let newTime = video.currentTime - step;
-                    if (newTime <= 0) {
-                        newTime = 0;
-                    }
-                    video.currentTime = newTime;
-                }
-            }
-            reverseAnimFrame = requestAnimationFrame(updateReverse);
-        }
-        reverseAnimFrame = requestAnimationFrame(updateReverse);
-    }
-
-    function stopReversing() {
-        if (!isReversing) return;
-        isReversing = false;
-        if (reverseAnimFrame) {
-            cancelAnimationFrame(reverseAnimFrame);
-            reverseAnimFrame = null;
-        }
-        video.play().catch(e => {});
-    }
-
     window.addEventListener("scroll", () => {
+        // Keep the live wallpaper playing during page scrolling.
+        // No reverse playback on scroll-up; just ensure the video is started.
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const delta = scrollTop - lastScrollTop;
-
-        clearTimeout(scrollEndTimeout);
-        if (delta < -SCROLL_THRESHOLD) {
-            // Scroll Up
-            startReversing();
-            scrollEndTimeout = setTimeout(() => {
-                stopReversing();
-            }, 300); // Allow brief gaps between scroll events while user is still scrolling up
-        } else if (delta > SCROLL_THRESHOLD) {
-            // Scroll Down
-            stopReversing();
-        } else {
-            // No significant scroll movement; if currently reversing, keep it for a short time
-            if (isReversing) {
-                scrollEndTimeout = setTimeout(() => {
-                    stopReversing();
-                }, 300);
-            }
-        }
-        
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
     });
 })();
