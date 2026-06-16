@@ -9,6 +9,7 @@ export default function Home() {
   const [contactOpen, setContactOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const splineBgRef = useRef(null);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +31,79 @@ export default function Home() {
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleAutoplayHelp = () => {
+      if (video) video.play().catch(() => {});
+      document.removeEventListener('scroll', handleAutoplayHelp);
+      document.removeEventListener('click', handleAutoplayHelp);
+    };
+    document.addEventListener('scroll', handleAutoplayHelp);
+    document.addEventListener('click', handleAutoplayHelp);
+
+    let lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    let scrollEndTimeout = null;
+    let reverseAnimFrame = null;
+    let lastFrameTime = 0;
+    let reversing = false;
+
+    const startReversing = () => {
+      if (reversing) return;
+      reversing = true;
+      video.pause();
+      lastFrameTime = performance.now();
+
+      const updateReverse = (now) => {
+        if (!reversing) return;
+        const elapsed = (now - lastFrameTime) / 1000;
+        lastFrameTime = now;
+
+        let newTime = video.currentTime - (elapsed * 1.2);
+        if (newTime <= 0) {
+          newTime = video.duration || 0;
+        }
+        video.currentTime = newTime;
+        reverseAnimFrame = requestAnimationFrame(updateReverse);
+      };
+      reverseAnimFrame = requestAnimationFrame(updateReverse);
+    };
+
+    const stopReversing = () => {
+      if (!reversing) return;
+      reversing = false;
+      if (reverseAnimFrame) {
+        cancelAnimationFrame(reverseAnimFrame);
+        reverseAnimFrame = null;
+      }
+      video.play().catch(() => {});
+    };
+
+    const handleScrollPlayback = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      if (scrollTop < lastScrollTop) {
+        startReversing();
+        clearTimeout(scrollEndTimeout);
+        scrollEndTimeout = setTimeout(() => {
+          stopReversing();
+        }, 150);
+      } else {
+        stopReversing();
+      }
+      lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+    };
+
+    window.addEventListener('scroll', handleScrollPlayback);
+    return () => {
+      window.removeEventListener('scroll', handleScrollPlayback);
+      document.removeEventListener('scroll', handleAutoplayHelp);
+      document.removeEventListener('click', handleAutoplayHelp);
+      if (scrollEndTimeout) clearTimeout(scrollEndTimeout);
+      if (reverseAnimFrame) cancelAnimationFrame(reverseAnimFrame);
+    };
   }, []);
 
   const enterSite = () => {
@@ -96,23 +170,26 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 2. DYNAMIC SPLINE BACKGROUND */}
-      <div 
-        ref={splineBgRef}
+      {/* 2. LIVE WALLPAPER VIDEO BACKGROUND */}
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        loop
+        playsInline
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
+          objectFit: 'cover',
           zIndex: 0,
-          transform: 'scale(1.5)',
-          transformOrigin: 'center',
-          transition: 'transform 0.1s ease-out'
+          pointerEvents: 'none'
         }}
       >
-        <Spline scene="https://my.spline.design/nexbotrobotcharacterconcept-EYYDbSvQRzK70oIdK0a6pvcz/" />
-      </div>
+        <source src="/assets/neon-infinity.mp4" type="video/mp4" />
+      </video>
 
       {/* 3. NAVBAR */}
       <nav style={{
@@ -186,49 +263,25 @@ export default function Home() {
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap', marginTop: '30px' }}>
               <Link href="/review">
-                <button style={{
-                  padding: '16px 40px',
-                  background: '#fff',
-                  color: '#000',
-                  border: 'none',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '1.1rem',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(255,255,255,0.15)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                <button 
+                  className="neon-btn-cyan" 
+                  style={{
+                    padding: '16px 40px',
+                    fontSize: '1.1rem',
+                    transition: 'all 0.3s ease'
+                  }}
                 >
                   AI Chat Bot
                 </button>
               </Link>
               <Link href="/url-analyzer">
-                <button style={{
-                  padding: '16px 40px',
-                  background: 'rgba(255,255,255,0.08)',
-                  color: '#fff',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '1.1rem',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                }}
+                <button 
+                  className="neon-btn-pink" 
+                  style={{
+                    padding: '16px 40px',
+                    fontSize: '1.1rem',
+                    transition: 'all 0.3s ease'
+                  }}
                 >
                   URL Analyzer
                 </button>
@@ -266,16 +319,16 @@ export default function Home() {
                 <h3 style={{ color: '#ffffff', marginBottom: '15px', fontSize: '1.8rem' }}>Advanced Detection</h3>
                 <p style={{ color: '#b3b3b3', fontSize: '1.05rem' }}>Our algorithm uses NLP and machine learning to understand patterns and detect sophisticated review fraud with explainable AI.</p>
               </div>
-              <div style={{ display: 'flex', gap: '25px', flexWrap: 'wrap', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', padding: '25px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ padding: '15px 25px', background: 'rgba(255,255,255,0.08)', borderRadius: '10px', textAlign: 'center', minWidth: '120px' }}>
+              <div style={{ display: 'flex', gap: '25px', flexWrap: 'wrap', justifyContent: 'center', background: 'rgba(2,2,8,0.6)', padding: '25px', borderRadius: '15px', border: '1px solid rgba(0, 242, 254, 0.2)' }}>
+                <div className="logo-item-cyber" style={{ padding: '15px 25px', borderRadius: '10px', textAlign: 'center', minWidth: '120px' }}>
                   <i className="fas fa-shopping-cart" style={{ fontSize: '2rem', marginBottom: '10px' }}></i>
                   <div style={{ fontSize: '1rem', fontWeight: 600 }}>Amazon</div>
                 </div>
-                <div style={{ padding: '15px 25px', background: 'rgba(255,255,255,0.08)', borderRadius: '10px', textAlign: 'center', minWidth: '120px' }}>
+                <div className="logo-item-cyber" style={{ padding: '15px 25px', borderRadius: '10px', textAlign: 'center', minWidth: '120px' }}>
                   <i className="fas fa-bag-shopping" style={{ fontSize: '2rem', marginBottom: '10px' }}></i>
                   <div style={{ fontSize: '1rem', fontWeight: 600 }}>Flipkart</div>
                 </div>
-                <div style={{ padding: '15px 25px', background: 'rgba(255,255,255,0.08)', borderRadius: '10px', textAlign: 'center', minWidth: '120px' }}>
+                <div className="logo-item-cyber" style={{ padding: '15px 25px', borderRadius: '10px', textAlign: 'center', minWidth: '120px' }}>
                   <i className="fas fa-store" style={{ fontSize: '2rem', marginBottom: '10px' }}></i>
                   <div style={{ fontSize: '1rem', fontWeight: 600 }}>E-Commerce</div>
                 </div>
@@ -285,7 +338,7 @@ export default function Home() {
         </section>
 
         {/* CONTACT SECTION */}
-        <section id="contact" style={{ padding: '120px 10%', background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+        <section id="contact" style={{ padding: '120px 10%', background: 'rgba(0,0,0,0.1)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
           <h2 style={{ fontSize: '3.5rem', marginBottom: '60px', background: 'linear-gradient(135deg, #ffffff 0%, #cccccc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textAlign: 'center', fontWeight: 800, letterSpacing: '-1px' }}>
             Get In Touch
           </h2>
@@ -293,19 +346,19 @@ export default function Home() {
             <p style={{ color: '#b3b3b3', fontSize: '1.1rem', lineHeight: 1.9 }}>Have questions about our AI detection system? Want to integrate FakeSpot into your platform? We'd love to hear from you.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '30px' }}>
-            <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)', border: '1px solid rgba(255,255,255,0.15)', padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
+            <div className="cyber-card-pink" style={{ padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
               <div style={{ fontSize: '2.8rem', marginBottom: '20px' }}>📧</div>
               <h3 style={{ marginBottom: '12px', color: '#ffffff', fontWeight: 700, fontSize: '1.2rem' }}>Email</h3>
               <p style={{ color: '#b3b3b3', fontSize: '0.9rem', overflowWrap: 'break-word' }}>cu24250022@coeruniversity.ac.in</p>
               <p style={{ color: '#b3b3b3', fontSize: '0.9rem', overflowWrap: 'break-word' }}>cu240251579@coeruniversity.ac.in</p>
               <p style={{ color: '#b3b3b3', fontSize: '0.9rem', overflowWrap: 'break-word' }}>cu24250059@coeruniversity.ac.in</p>
             </div>
-            <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)', border: '1px solid rgba(255,255,255,0.15)', padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
+            <div className="cyber-card-pink" style={{ padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
               <div style={{ fontSize: '2.8rem', marginBottom: '20px' }}>📍</div>
               <h3 style={{ marginBottom: '12px', color: '#ffffff', fontWeight: 700, fontSize: '1.2rem' }}>Location</h3>
               <p style={{ color: '#b3b3b3', fontSize: '1rem' }}>India</p>
             </div>
-            <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)', border: '1px solid rgba(255,255,255,0.15)', padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
+            <div className="cyber-card-pink" style={{ padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
               <div style={{ fontSize: '2.8rem', marginBottom: '20px' }}>💼</div>
               <h3 style={{ marginBottom: '12px', color: '#ffffff', fontWeight: 700, fontSize: '1.2rem' }}>Business</h3>
               <p style={{ color: '#b3b3b3', fontSize: '0.9rem' }}>cu24250022@coeruniversity.ac.in</p>
@@ -323,29 +376,7 @@ export default function Home() {
       <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 99, animation: 'float-up 3s ease-in-out infinite' }}>
         <button 
           onClick={toggleContact}
-          style={{
-            padding: '16px 28px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)',
-            color: '#000',
-            border: 'none',
-            borderRadius: '50px',
-            cursor: 'pointer',
-            fontWeight: 700,
-            fontSize: '0.95rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            boxShadow: '0 10px 40px rgba(255,255,255,0.2)',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'scale(1.05)';
-            e.currentTarget.style.boxShadow = '0 15px 50px rgba(255,255,255,0.3)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 10px 40px rgba(255,255,255,0.2)';
-          }}
+          className="neon-btn-pink-round"
         >
           <i className="fas fa-envelope" style={{ fontSize: '1.1rem' }}></i>
           Contact Us

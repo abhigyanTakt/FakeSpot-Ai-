@@ -2,8 +2,25 @@
 
 :root{
     --primary:#ffffff;
-    --glass:rgba(255,255,255,0.08);
-    --border:rgba(255,255,255,0.15);
+    --glass:rgba(2, 2, 8, 0.55);
+    --border:rgba(0, 242, 254, 0.2);
+    --neon-cyan:#00f2fe;
+    --neon-pink:#ff007f;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #020208;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 242, 254, 0.3);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #00f2fe;
+    box-shadow: 0 0 10px #00f2fe;
 }
 
 *{
@@ -14,7 +31,7 @@
 
 body{
     font-family:'Inter',sans-serif;
-    background:#000;
+    background:#020208;
     color:#fff;
     overflow-x:hidden;
     letter-spacing:0.3px;
@@ -30,4 +47,109 @@ p{
     line-height:1.6;
 }
 
-/* Add other styles as needed */
+/* Reusable Cybercity Theme Classes */
+.cyber-card-cyan {
+    background: rgba(2, 2, 8, 0.65) !important;
+    border: 1px solid rgba(0, 242, 254, 0.15) !important;
+    backdrop-filter: blur(15px) !important;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+.cyber-card-cyan:hover {
+    transform: translateY(-8px) !important;
+    border-color: var(--neon-cyan) !important;
+    box-shadow: 0 0 25px rgba(0, 242, 254, 0.4), inset 0 0 10px rgba(0, 242, 254, 0.15) !important;
+}
+
+.cyber-card-pink {
+    background: rgba(2, 2, 8, 0.65) !important;
+    border: 1px solid rgba(255, 0, 127, 0.15) !important;
+    backdrop-filter: blur(15px) !important;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+.cyber-card-pink:hover {
+    border-color: var(--neon-pink) !important;
+    box-shadow: 0 0 25px rgba(255, 0, 127, 0.4), inset 0 0 10px rgba(255, 0, 127, 0.15) !important;
+    transform: translateY(-5px) !important;
+}
+
+.logo-item-cyber {
+    background: rgba(2, 2, 8, 0.7) !important;
+    border: 1px solid rgba(0, 242, 254, 0.15) !important;
+    transition: all 0.3s ease !important;
+}
+.logo-item-cyber:hover {
+    background: rgba(2, 2, 8, 0.85) !important;
+    border-color: var(--neon-cyan) !important;
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.35) !important;
+    transform: scale(1.05) !important;
+}
+
+.neon-btn-cyan {
+    background: rgba(2, 2, 8, 0.6) !important;
+    color: #fff !important;
+    border: 2px solid #00f2fe !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    font-weight: 700 !important;
+    transition: all 0.3s ease !important;
+    text-shadow: 0 0 5px #00f2fe !important;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.3), inset 0 0 5px rgba(0, 242, 254, 0.2) !important;
+}
+.neon-btn-cyan:hover {
+    background: #00f2fe !important;
+    color: #000 !important;
+    box-shadow: 0 0 20px #00f2fe, 0 0 45px #00f2fe !important;
+    text-shadow: none !important;
+    transform: translateY(-2px) !important;
+}
+.neon-btn-cyan:active {
+    transform: translateY(0px) scale(0.96) !important;
+}
+
+.neon-btn-pink {
+    background: rgba(2, 2, 8, 0.6) !important;
+    color: #fff !important;
+    border: 2px solid #ff007f !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    font-weight: 700 !important;
+    transition: all 0.3s ease !important;
+    text-shadow: 0 0 5px #ff007f !important;
+    box-shadow: 0 0 10px rgba(255, 0, 127, 0.3), inset 0 0 5px rgba(255, 0, 127, 0.2) !important;
+}
+.neon-btn-pink:hover {
+    background: #ff007f !important;
+    color: #fff !important;
+    box-shadow: 0 0 20px #ff007f, 0 0 45px #ff007f !important;
+    text-shadow: none !important;
+    transform: translateY(-2px) !important;
+}
+.neon-btn-pink:active {
+    transform: translateY(0px) scale(0.96) !important;
+}
+
+.neon-btn-pink-round {
+    padding: 16px 28px !important;
+    background: rgba(2, 2, 8, 0.75) !important;
+    color: #fff !important;
+    border: 2px solid #ff007f !important;
+    border-radius: 50px !important;
+    cursor: pointer !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    text-shadow: 0 0 5px #ff007f !important;
+    box-shadow: 0 0 10px rgba(255, 0, 127, 0.3), inset 0 0 5px rgba(255, 0, 127, 0.2) !important;
+}
+.neon-btn-pink-round:hover {
+    transform: scale(1.05) !important;
+    background: #ff007f !important;
+    color: #fff !important;
+    box-shadow: 0 0 20px #ff007f, 0 0 40px #ff007f !important;
+    text-shadow: none !important;
+}
