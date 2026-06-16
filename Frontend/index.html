@@ -975,6 +975,7 @@ createParticles();
     let isReversing = false;
     let reverseAnimFrame = null;
     let lastFrameTime = 0;
+    const SCROLL_THRESHOLD = 1;
 
     function startReversing() {
         if (isReversing) return;
@@ -994,7 +995,7 @@ createParticles();
                     let step = (elapsed / 1000) * 1.5;
                     let newTime = video.currentTime - step;
                     if (newTime <= 0) {
-                        newTime = video.duration || 0;
+                        newTime = 0;
                     }
                     video.currentTime = newTime;
                 }
@@ -1017,17 +1018,24 @@ createParticles();
     window.addEventListener("scroll", () => {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const delta = scrollTop - lastScrollTop;
-        
-        if (delta < -2) {
-            // Scroll Up significantly
+
+        clearTimeout(scrollEndTimeout);
+        if (delta < -SCROLL_THRESHOLD) {
+            // Scroll Up
             startReversing();
-            clearTimeout(scrollEndTimeout);
             scrollEndTimeout = setTimeout(() => {
                 stopReversing();
-            }, 180); // Debounce to allow continuous scroll event sequence to hold reverse status
-        } else if (delta > 2) {
-            // Scroll Down significantly
+            }, 300); // Allow brief gaps between scroll events while user is still scrolling up
+        } else if (delta > SCROLL_THRESHOLD) {
+            // Scroll Down
             stopReversing();
+        } else {
+            // No significant scroll movement; if currently reversing, keep it for a short time
+            if (isReversing) {
+                scrollEndTimeout = setTimeout(() => {
+                    stopReversing();
+                }, 300);
+            }
         }
         
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
