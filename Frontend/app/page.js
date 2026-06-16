@@ -59,14 +59,21 @@ export default function Home() {
 
       const updateReverse = (now) => {
         if (!reversing) return;
-        const elapsed = (now - lastFrameTime) / 1000;
-        lastFrameTime = now;
+        const elapsed = now - lastFrameTime;
 
-        let newTime = video.currentTime - (elapsed * 1.2);
-        if (newTime <= 0) {
-          newTime = video.duration || 0;
+        if (elapsed >= 50) { // Limit to max 20fps seeking rate so the browser's video decoder doesn't lock up
+          lastFrameTime = now;
+
+          if (!video.seeking && !isNaN(video.duration)) {
+            // Scrub backward by 1.5x time step
+            let step = (elapsed / 1000) * 1.5;
+            let newTime = video.currentTime - step;
+            if (newTime <= 0) {
+              newTime = video.duration || 0;
+            }
+            video.currentTime = newTime;
+          }
         }
-        video.currentTime = newTime;
         reverseAnimFrame = requestAnimationFrame(updateReverse);
       };
       reverseAnimFrame = requestAnimationFrame(updateReverse);
@@ -84,15 +91,20 @@ export default function Home() {
 
     const handleScrollPlayback = () => {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      if (scrollTop < lastScrollTop) {
+      const delta = scrollTop - lastScrollTop;
+      
+      if (delta < -2) {
+        // Scroll Up significantly
         startReversing();
         clearTimeout(scrollEndTimeout);
         scrollEndTimeout = setTimeout(() => {
           stopReversing();
-        }, 150);
-      } else {
+        }, 180); // Debounce to allow continuous scroll event sequence to hold reverse status
+      } else if (delta > 2) {
+        // Scroll Down significantly
         stopReversing();
       }
+      
       lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
     };
 
@@ -177,6 +189,7 @@ export default function Home() {
         muted
         loop
         playsInline
+        preload="auto"
         style={{
           position: 'fixed',
           top: 0,

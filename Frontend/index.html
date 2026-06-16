@@ -711,7 +711,7 @@ section h2{
 <!-- ============ MAIN CONTENT ============ -->
 <div id="main-content">
 
-<video id="live-wallpaper" autoplay muted loop playsinline style="position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-2; pointer-events:none;">
+<video id="live-wallpaper" autoplay muted loop playsinline preload="auto" style="position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-2; pointer-events:none;">
     <source src="public/assets/neon-infinity.mp4" type="video/mp4">
 </video>
 
@@ -984,15 +984,21 @@ createParticles();
 
         function updateReverse(now) {
             if (!isReversing) return;
-            const elapsed = (now - lastFrameTime) / 1000;
-            lastFrameTime = now;
-
-            // Speed multiplier of 1.2 for slightly snappier reverse action
-            let newTime = video.currentTime - (elapsed * 1.2);
-            if (newTime <= 0) {
-                newTime = video.duration || 0;
+            const elapsed = now - lastFrameTime;
+            
+            if (elapsed >= 50) { // Limit to max 20fps seeking rate so the browser's video decoder doesn't lock up
+                lastFrameTime = now;
+                
+                if (!video.seeking && !isNaN(video.duration)) {
+                    // Scrub backward by 1.5x time step
+                    let step = (elapsed / 1000) * 1.5;
+                    let newTime = video.currentTime - step;
+                    if (newTime <= 0) {
+                        newTime = video.duration || 0;
+                    }
+                    video.currentTime = newTime;
+                }
             }
-            video.currentTime = newTime;
             reverseAnimFrame = requestAnimationFrame(updateReverse);
         }
         reverseAnimFrame = requestAnimationFrame(updateReverse);
@@ -1010,17 +1016,20 @@ createParticles();
 
     window.addEventListener("scroll", () => {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        if (scrollTop < lastScrollTop) {
-            // Scrolling up
+        const delta = scrollTop - lastScrollTop;
+        
+        if (delta < -2) {
+            // Scroll Up significantly
             startReversing();
             clearTimeout(scrollEndTimeout);
             scrollEndTimeout = setTimeout(() => {
                 stopReversing();
-            }, 150);
-        } else {
-            // Scrolling down
+            }, 180); // Debounce to allow continuous scroll event sequence to hold reverse status
+        } else if (delta > 2) {
+            // Scroll Down significantly
             stopReversing();
         }
+        
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
     });
 })();
