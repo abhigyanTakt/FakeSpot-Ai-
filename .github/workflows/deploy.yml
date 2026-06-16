@@ -27,8 +27,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            vercel deploy --token "$VERCEL_TOKEN" --confirm --org "$VERCEL_ORG_ID" --project "$VERCEL_PROJECT_ID" --cwd .
+            vercel deploy --token "$VERCEL_TOKEN" --confirm --org "$VERCEL_ORG_ID" --project "$VERCEL_PROJECT_ID"
           else
-            vercel deploy --prod --token "$VERCEL_TOKEN" --confirm --org "$VERCEL_ORG_ID" --project "$VERCEL_PROJECT_ID" --cwd .
+            vercel deploy --prod --token "$VERCEL_TOKEN" --confirm --org "$VERCEL_ORG_ID" --project "$VERCEL_PROJECT_ID"
           fi
-        working-directory: Frontend
