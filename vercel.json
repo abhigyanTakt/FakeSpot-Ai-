@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "projectSettings": {
+    "sourceFilesOutsideRootDirectory": true
+  },
+  "buildCommand": "cd Frontend && npm run build",
+  "devCommand": "cd Frontend && npm run dev",
+  "installCommand": "cd Frontend && npm install",
+  "outputDirectory": "Frontend/.next",
+  "framework": "nextjs",
+  "env": [
+    {
+      "key": "NEXT_PUBLIC_API_URL",
+      "value": "https://your-backend-api.com",
+      "type": "secret"
+    }
+  ]
+}
