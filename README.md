@@ -29,6 +29,11 @@ An advanced AI-powered system that detects fake reviews through both text analys
 - Cursor-responsive 3D robot background
 - Real-time responses with engaging animations
 
+
+### **Flowchart**
+<img width="1474" height="692" alt="image" src="https://github.com/user-attachments/assets/1be5c450-d413-4353-b3a7-8cd5066fd71c" />
+
+
 ## 🚀 Quick Start
 
 ### Backend Setup
