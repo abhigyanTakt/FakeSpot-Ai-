@@ -112,3 +112,7 @@ Enjoy chatting with your AI review detective! 🕵️‍♂️
 - **Added URL Analyzer**: Integrated a dedicated page allowing users to parse and analyze review content straight from product URLs.
 - **Corrected Layout Alignments**: Fixed navbar positioning to stay fixed at `top: 0; left: 0;` and removed redundant absolute back buttons to avoid overlapping elements.
 - **Next.js Framework Migration**: Ported the entire static HTML/CSS prototype frontend to a Next.js (App Router) structure (`/`, `/review`, `/url-analyzer`) with successful local production builds.
+
+
+### June 18, 2026 - 10:02 AM
+- Spline model polishing and improvments.
