@@ -956,26 +956,19 @@ createParticles();
     });
 })();
 
-// Live wallpaper scroll control (forward on scroll down/idle, reverse on scroll up)
+// Live wallpaper initialization
 (function() {
     const video = document.getElementById("live-wallpaper");
     if (!video) return;
 
-    // Start video on first scroll or interaction if browser autoplay policies block it
     const startVideo = () => {
         video.play().catch(e => console.log("Video playback initial block:", e));
         document.removeEventListener("scroll", startVideo);
         document.removeEventListener("click", startVideo);
     };
+
     document.addEventListener("scroll", startVideo);
     document.addEventListener("click", startVideo);
-
-    window.addEventListener("scroll", () => {
-        // Keep the live wallpaper playing during page scrolling.
-        // No reverse playback on scroll-up; just ensure the video is started.
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-    });
 })();
 
 </script>
