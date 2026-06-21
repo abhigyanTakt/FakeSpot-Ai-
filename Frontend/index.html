@@ -956,82 +956,19 @@ createParticles();
     });
 })();
 
-// Live wallpaper scroll control (forward on scroll down/idle, reverse on scroll up)
+// Live wallpaper initialization
 (function() {
     const video = document.getElementById("live-wallpaper");
     if (!video) return;
 
-    // Start video on first scroll or interaction if browser autoplay policies block it
     const startVideo = () => {
         video.play().catch(e => console.log("Video playback initial block:", e));
         document.removeEventListener("scroll", startVideo);
         document.removeEventListener("click", startVideo);
     };
+
     document.addEventListener("scroll", startVideo);
     document.addEventListener("click", startVideo);
-
-    let lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    let scrollEndTimeout = null;
-    let isReversing = false;
-    let reverseAnimFrame = null;
-    let lastFrameTime = 0;
-
-    function startReversing() {
-        if (isReversing) return;
-        isReversing = true;
-        video.pause();
-        lastFrameTime = performance.now();
-
-        function updateReverse(now) {
-            if (!isReversing) return;
-            const elapsed = now - lastFrameTime;
-            
-            if (elapsed >= 50) { // Limit to max 20fps seeking rate so the browser's video decoder doesn't lock up
-                lastFrameTime = now;
-                
-                if (!video.seeking && !isNaN(video.duration)) {
-                    // Scrub backward by 1.5x time step
-                    let step = (elapsed / 1000) * 1.5;
-                    let newTime = video.currentTime - step;
-                    if (newTime <= 0) {
-                        newTime = video.duration || 0;
-                    }
-                    video.currentTime = newTime;
-                }
-            }
-            reverseAnimFrame = requestAnimationFrame(updateReverse);
-        }
-        reverseAnimFrame = requestAnimationFrame(updateReverse);
-    }
-
-    function stopReversing() {
-        if (!isReversing) return;
-        isReversing = false;
-        if (reverseAnimFrame) {
-            cancelAnimationFrame(reverseAnimFrame);
-            reverseAnimFrame = null;
-        }
-        video.play().catch(e => {});
-    }
-
-    window.addEventListener("scroll", () => {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const delta = scrollTop - lastScrollTop;
-        
-        if (delta < -2) {
-            // Scroll Up significantly
-            startReversing();
-            clearTimeout(scrollEndTimeout);
-            scrollEndTimeout = setTimeout(() => {
-                stopReversing();
-            }, 180); // Debounce to allow continuous scroll event sequence to hold reverse status
-        } else if (delta > 2) {
-            // Scroll Down significantly
-            stopReversing();
-        }
-        
-        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-    });
 })();
 
 </script>

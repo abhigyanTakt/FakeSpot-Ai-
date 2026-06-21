@@ -29,6 +29,11 @@ An advanced AI-powered system that detects fake reviews through both text analys
 - Cursor-responsive 3D robot background
 - Real-time responses with engaging animations
 
+
+### **Flowchart**
+<img width="1474" height="692" alt="image" src="https://github.com/user-attachments/assets/1be5c450-d413-4353-b3a7-8cd5066fd71c" />
+
+
 ## 🚀 Quick Start
 
 ### Backend Setup
@@ -107,3 +112,7 @@ Enjoy chatting with your AI review detective! 🕵️‍♂️
 - **Added URL Analyzer**: Integrated a dedicated page allowing users to parse and analyze review content straight from product URLs.
 - **Corrected Layout Alignments**: Fixed navbar positioning to stay fixed at `top: 0; left: 0;` and removed redundant absolute back buttons to avoid overlapping elements.
 - **Next.js Framework Migration**: Ported the entire static HTML/CSS prototype frontend to a Next.js (App Router) structure (`/`, `/review`, `/url-analyzer`) with successful local production builds.
+
+
+### June 18, 2026 - 10:02 AM
+- Spline model polishing and improvments.
