@@ -126,3 +126,6 @@ Enjoy chatting with your AI review detective! 🕵️‍♂️
 
 ### july 30, 2026- 12:04 AM IST
 - token change for the env
+
+### Aug 3, 2026- 8:23 AM IST
+ - some styling changes are made
